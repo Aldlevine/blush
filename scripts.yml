@@ -1,0 +1,30 @@
+build:
+  - test
+  - docs
+
+precommit:
+  try:
+    - git checkout HEAD -- docs || true
+    - git stash save --keep-index -q "precommt stash" || true
+    - build
+    - git add package.json docs
+  finally: git stash pop -q || true
+
+commitmsg: commitlint -e $GIT_PARAMS
+
+docs: esdoc
+
+test: nyc mocha
+
+update:
+  - comp update -sp
+
+version:
+  - conventional-changelog -p angular -i CHANGELOG.md -s -r 0
+  - git add CHANGELOG.md
+
+nbuild:
+  - nearleyc src/blush.ne -o dist/grammar.js
+
+ntest:
+  - nearley-test dist/grammar -i "$(< ./test.sh) ;" $@

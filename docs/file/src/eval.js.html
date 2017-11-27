@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/eval.js | blush</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Basic little universal shell"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="blush"><meta property="twitter:description" content="Basic little universal shell"></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-args">args</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-env">env</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-glob">glob</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#builtins">builtins</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~alias.html">alias</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~unalias.html">unalias</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/builtin.js~Builtin.html">Builtin</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/cd.js~Cd.html">Cd</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/exit.js~Exit.html">Exit</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/source.js~Source.html">Source</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/which.js~Which.html">Which</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-EventEmitter">EventEmitter</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-cd">cd</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-exit">exit</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-source">source</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-which">which</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#utils">utils</a><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-locateCommand">locateCommand</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parseExitCode">parseExitCode</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/eval.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const $ = exports;
+const locateCommand = require(&apos;./utils/locate-command&apos;);
+const parseExitCode = require(&apos;./utils/parse-exit-code&apos;);
+const builtins = require(&apos;./builtins&apos;);
+const log = require(&apos;./debug&apos;)(&apos;blush:eval&apos;);
+const {PassThrough} = require(&apos;stream&apos;);
+const {spawn} = require(&apos;child_process&apos;);
+const fs = require(&apos;fs&apos;);
+
+$.evaluate = async function (node, ctx={})
+{
+  if (node instanceof Array) {
+    for (let node of node) {
+      await $.evaluate(node);
+    }
+  }
+
+  if (!node || !(node.type in $)) {
+    return log(&apos;node type \&apos;%s\&apos; not implemented&apos;, node &amp;&amp; node.type || node);
+  }
+
+ return await $[node.type](node, ctx);
+}
+
+$.program = async function (node, ctx)
+{
+  log(&apos;evaluate program&apos;);
+  const {body} = node;
+  return body &amp;&amp; await $.evaluate(body, ctx);
+}
+
+$.list = async function (node, ctx)
+{
+  log(&apos;evaluate list&apos;);
+  const {commands} = node;
+  const {pipe_stdin, pipe_stdout} = ctx;
+
+  let exitCode = 0;
+
+  for (let i=0, ii=commands.length; i&lt;ii; i++) {
+    const cmd = commands[i];
+    const cmd_ctx = {};
+    const modifier = cmd.modifier &amp;&amp; await $.evaluate(cmd.modifier);
+
+    log(&apos;modifier: %s; exit-code: %d&apos;, modifier, exitCode);
+    if (modifier == &apos;and&apos; &amp;&amp; !!exitCode) {
+      continue;
+    }
+    if (modifier == &apos;or&apos; &amp;&amp; !exitCode) {
+      continue;
+    }
+
+    if (pipe_stdin) {
+      cmd_ctx.pipe_stdin = pipe_stdin;
+    }
+
+    if (pipe_stdout) {
+      cmd_ctx.pipe_stdout = new PassThrough;
+      cmd_ctx.pipe_stdout
+      .on(&apos;data&apos;, (data) =&gt; {
+        pipe_stdout.write(data);
+      })
+      .on(&apos;error&apos;, (err) =&gt; {
+      })
+    }
+
+    try {
+      await $.evaluate(cmd, cmd_ctx);
+      exitCode = 0;
+    }
+    catch (err) {
+      log(&apos;command errored&apos;);
+      exitCode = err;
+      // throw err;
+    }
+  }
+
+  if (pipe_stdout) {
+    pipe_stdout.end();
+  }
+
+  if (exitCode !== 0) {
+    throw exitCode;
+  }
+}
+
+const NS_PER_SEC = 1e9;
+const US_PER_SEC = 1e6;
+const MS_PER_SEC = 1e3;
+
+$.pipeline = async function (node, ctx)
+{
+  log(&apos;evaluate pipeline&apos;);
+
+  const promises = [];
+  const {commands, time, negate} = node;
+  const {pipe_stdin, pipe_stdout, redir} = ctx;
+
+  let exitCode = 0;
+  let stream = null;
+
+  let start;
+  if (time) {
+    start = process.hrtime();
+  }
+
+  for (let i=0, ii=commands.length; i&lt;ii; i++) {
+    const cmd_ctx = {};
+    const cmd = commands[i];
+
+    if (i == 0) cmd_ctx.pipe_stdin = pipe_stdin;
+    else cmd_ctx.pipe_stdin = stream;
+
+    if (i == ii-1) cmd_ctx.pipe_stdout = pipe_stdout;
+    else cmd_ctx.pipe_stdout = stream = new PassThrough;
+
+    cmd_ctx.redir = redir;
+
+    promises.push($.evaluate(cmd, cmd_ctx));
+  }
+
+  try {
+    await Promise.all(promises);
+    if (negate) {
+      exitCode = 1;
+    }
+  }
+  catch (err) {
+    if (negate) {
+      exitCode = 0;
+    }
+    else {
+      exitCode = parseExitCode(err);
+    }
+  }
+
+  if (time) {
+    const d = process.hrtime(start);
+    let time = d[0] * NS_PER_SEC + d[1];
+    let unit = &apos;ns&apos;;
+    if (time &gt; NS_PER_SEC) {
+      time /= NS_PER_SEC;
+      unit = &apos;s&apos;;
+    }
+    else if (time &gt; NS_PER_SEC/MS_PER_SEC) {
+      time /= NS_PER_SEC/MS_PER_SEC;
+      unit = &apos;ms&apos;;
+    }
+    else if (time &gt; NS_PER_SEC/US_PER_SEC) {
+      time /= NS_PER_SEC/US_PER_SEC;
+      unit = &apos;us&apos;;
+    }
+    console.log(`${time.toFixed(2)}${unit}`);
+  }
+
+  if (exitCode !== 0) {
+    throw exitCode;
+  }
+}
+
+/**
+ * TODO: restore stdin if not consumed
+ */
+$.simple_cmd = async function (node, ctx)
+{
+  let name = $.word(node.name);
+  let args = node.args.map($.word);
+
+  log(&apos;evaluate simple_cmd &quot;%s&quot;&apos;, name);
+
+  const stdio = [0,1,2];
+
+  if (ctx.pipe_stdin) {
+    log(&apos;pipe into &quot;%s&quot;&apos;, name);
+    stdio[0] = &apos;pipe&apos;;
+  }
+
+  if (ctx.pipe_stdout) {
+    log(&apos;pipe out of &quot;%s&quot;&apos;, name);
+    stdio[1] = &apos;pipe&apos;;
+  }
+
+  const redirs = {};
+  for (let r of node.redir) {
+    const {io, stream} = await $.evaluate(r);
+    stdio[io] = &apos;pipe&apos;;
+    redirs[io] = redirs[io] || [];
+    redirs[io].push(stream);
+  }
+
+  await new Promise((res, rej) =&gt; {
+    let proc;
+    let alias = builtins.alias.getAlias(name);
+    if (alias) {
+      let [aliasName, ...aliasArgs] = alias.split(&apos; &apos;);
+      name = aliasName;
+      args = [...aliasArgs, ...args];
+    }
+    if (name in builtins) {
+      proc = new builtins[name](name, args, {stdio});
+    }
+    else {
+      const cmdpath = locateCommand(name);
+      if (!cmdpath) {
+        process.stderr.write(`blush: command not found: ${name}\n`);
+        return rej(127);
+      }
+      proc = spawn(cmdpath, args, {stdio});
+    }
+
+    if (ctx.pipe_stdin) {
+      if (ctx.pipe_stdin.readable) {
+        ctx.pipe_stdin
+        .on(&apos;data&apos;, (data) =&gt; {
+          if (proc.stdin.writable) {
+            proc.stdin.write(data);
+          }
+        })
+        .on(&apos;end&apos;, () =&gt; {
+          proc.stdin.end();
+        })
+        .on(&apos;error&apos;, (err) =&gt; {
+          rej(err);
+        })
+
+        proc.stdin
+        .on(&apos;error&apos;, (err) =&gt; {
+          rej(err);
+        })
+      }
+      else {
+        proc.stdin.end();
+      }
+    }
+
+    for (let io in redirs) {
+      proc.stdio[io]
+      .on(&apos;data&apos;, (data) =&gt; {
+        for (let stream of redirs[io]) {
+          stream.write(data);
+        }
+      })
+      .on(&apos;end&apos;, () =&gt; {
+        for (let stream of redirs[io]) {
+          stream.end();
+        }
+      });
+      // proc.stdio[io].pipe(redirs[io]);
+    }
+
+    if (ctx.pipe_stdout) {
+      proc.stdout
+      .on(&apos;data&apos;, (data) =&gt; {
+        ctx.pipe_stdout.write(data);
+      })
+      .on(&apos;end&apos;, () =&gt; {
+        ctx.pipe_stdout.end();
+      })
+      .on(&apos;error&apos;, (err) =&gt; {
+        rej(err);
+      })
+    }
+
+    proc
+    .on(&apos;exit&apos;, (code, signal) =&gt; {
+      log(&apos;exit &quot;%s&quot;&apos;, name);
+      if (code || signal) return rej(code || signal);
+      res();
+    })
+    .on(&apos;error&apos;, (err) =&gt; {
+      rej(err);
+    })
+  });
+
+  log(&apos;evaluate simple_cmd&apos;);
+}
+
+$.group_cmd = async function (node, ctx)
+{
+  return await $.evaluate(node.list, ctx);
+}
+
+$.redir_ofile = async function (node, ctx)
+{
+  const fname = $.word(node.fname);
+  return {io: node.io, stream: fs.createWriteStream(fname)};
+}
+
+$.assign = async function (node, ctx)
+{
+  const {name, value} = node;
+  if (value) {
+    process.env[name] = $.word(value);
+  }
+  else {
+    delete process.env[name];
+  }
+}
+
+$.AND = function (node, ctx)
+{
+  return &apos;and&apos;;
+}
+
+$.OR = function (node, ctx)
+{
+  return &apos;or&apos;;
+}
+
+$.word = require(&apos;./word&apos;).evaluate;
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

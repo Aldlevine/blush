@@ -1,0 +1,190 @@
+{
+  "coverage": "1%",
+  "expectCount": 100,
+  "actualCount": 1,
+  "files": {
+    "src/builtins/alias.js": {
+      "expectCount": 9,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3,
+        5,
+        7,
+        39,
+        44,
+        49,
+        60,
+        62
+      ]
+    },
+    "src/builtins/builtin.js": {
+      "expectCount": 10,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        4,
+        6,
+        24,
+        25,
+        26,
+        29,
+        30,
+        31
+      ]
+    },
+    "src/builtins/cd.js": {
+      "expectCount": 3,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3,
+        5
+      ]
+    },
+    "src/builtins/exit.js": {
+      "expectCount": 3,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3,
+        5
+      ]
+    },
+    "src/builtins/index.js": {
+      "expectCount": 5,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        4,
+        8,
+        9
+      ]
+    },
+    "src/builtins/source.js": {
+      "expectCount": 5,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        3,
+        5,
+        7
+      ]
+    },
+    "src/builtins/which.js": {
+      "expectCount": 6,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        8
+      ]
+    },
+    "src/eval.js": {
+      "expectCount": 21,
+      "actualCount": 1,
+      "undocumentLines": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        10,
+        25,
+        32,
+        87,
+        88,
+        89,
+        91,
+        278,
+        283,
+        289,
+        300,
+        305
+      ]
+    },
+    "src/index.js": {
+      "expectCount": 3,
+      "actualCount": 0,
+      "undocumentLines": [
+        3,
+        7,
+        8
+      ]
+    },
+    "src/interp.js": {
+      "expectCount": 3,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        11,
+        20
+      ]
+    },
+    "src/unit.js": {
+      "expectCount": 18,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3,
+        7,
+        9,
+        17,
+        18,
+        19,
+        23,
+        25,
+        33,
+        34,
+        35,
+        39,
+        41,
+        47,
+        51,
+        53,
+        59
+      ]
+    },
+    "src/utils/locate-command.js": {
+      "expectCount": 3,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        4
+      ]
+    },
+    "src/utils/parse-exit-code.js": {
+      "expectCount": 2,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3
+      ]
+    },
+    "src/word.js": {
+      "expectCount": 9,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        4,
+        6,
+        15,
+        27,
+        32,
+        39,
+        47
+      ]
+    }
+  }
+}

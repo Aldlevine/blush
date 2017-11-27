@@ -1,0 +1,70 @@
+{
+  "name": "blush",
+  "version": "0.0.0",
+  "description": "Basic little universal shell",
+  "license": "MIT",
+  "author": "Aaron Levine <ald.levine@gmail.com>",
+  "bin": {
+    "blush": "src/index.js"
+  },
+  "scripts": {
+    "build": "ez build",
+    "precommit": "ez precommit",
+    "commitmsg": "ez commitmsg",
+    "docs": "ez docs",
+    "link": "ez link",
+    "test": "ez test",
+    "update": "ez update",
+    "version": "ez version"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "chalk": "^2.3.0",
+    "debug": "^3.1.0",
+    "glob": "^7.1.2",
+    "nearley": "^2.11.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^4.3.0",
+    "@commitlint/config-angular": "^4.3.0",
+    "chai": "^4.1.2",
+    "comptroller": "^0.3.0",
+    "conventional-changelog-cli": "^1.3.4",
+    "cz-conventional-changelog": "^2.1.0",
+    "esdoc": "^1.0.4",
+    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
+    "esdoc-node": "^1.0.2",
+    "esdoc-standard-plugin": "^1.0.0",
+    "husky": "^0.14.3",
+    "jison": "^0.4.18",
+    "jison-gho": "^0.6.1-209",
+    "js-beautify": "^1.7.4",
+    "mocha": "^4.0.1",
+    "moo": "^0.4.3",
+    "nyc": "^11.3.0",
+    "scripteasy": "0.0.5",
+    "slashes": "^1.0.5",
+    "unescape-js": "^1.1.0"
+  },
+  "comptroller": {
+    "source": "src/**/*.js",
+    "dev": "test/**/*",
+    "pretty": 80,
+    "detective": {
+      "parse": {
+        "plugins": [
+          "objectRestSpread"
+        ]
+      }
+    },
+    "ignore": [
+      "slashes",
+      "unescape-js"
+    ]
+  },
+  "scripteasy": "scripts.yml"
+}
