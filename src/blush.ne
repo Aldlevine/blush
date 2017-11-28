@@ -69,7 +69,7 @@
 
   const lexer = moo.states({
     main: {
-      WS: /[ \t]/,
+      WS: /[ \t]+/,
       COMMENT: /#.+/,
       LESSAND: '<&',
       GREATAND: '>&',
@@ -194,7 +194,7 @@ list_term    -> (%SEMI | %BG | %NL)
                   value: one(term),
                 }) %}
 
-list_item    -> pipeline | assign
+list_item    -> (pipeline | assign)
                 {% id %}
 
 pipeline     -> (%TIME __):? (%BANG __):? command (_ pipe_sep empty command):*
@@ -237,7 +237,7 @@ time         -> %TIME
                   }) %}
 
 # TODO: Add redirects
-command      -> ((redir _):* __):? (simple_cmd | compound_cmd) (_ redir):*
+command      -> ((redir _):+ __):? (simple_cmd | compound_cmd) (_ redir):*
                 {% ([redir1, cmd, redir2]) => {
                   cmd = one(cmd);
                   cmd.pipe_stdout = null;
@@ -247,12 +247,21 @@ command      -> ((redir _):* __):? (simple_cmd | compound_cmd) (_ redir):*
                 } %}
 
 simple_cmd   -> (assign __):* strict_word (__ loose_word):*
-                {% ([assign, name, args]) => ({
-                  type: 'simple_cmd',
-                  params: merge(assign),
-                  name: one(name),
-                  args: merge(...args),
-                }) %}
+                {% ([assign, name, args]) => {
+                  name = one(name);
+                  args = merge(...args);
+                  let dot = false;
+                  if (/^\.\//.test(name)) {
+                    dot = true;
+                  }
+                  return {
+                    type: 'simple_cmd',
+                    params: merge(assign),
+                    name,
+                    args,
+                    dot,
+                  }
+                } %}
 
 compound_cmd -> (group_cmd | if_cmd | while_cmd | until_cmd | subshell_cmd)
 
@@ -367,13 +376,13 @@ redir_ofile  -> %GREAT _ word
                   fname: one(fname),
                 }) %}
 
-newline      -> (%NL):*
+newline      -> (%NL):+
                 {% id %}
 
-EMPTY        -> (%WS | %NL | %COMMENT):+
+empty        -> (%WS | %NL | %COMMENT):*
                 {% () => null %}
 
-empty        -> (%WS | %NL | %COMMENT):*
+EMPTY        -> (%WS | %NL | %COMMENT):+
                 {% () => null %}
 
 _            -> (%WS):*

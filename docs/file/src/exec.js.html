@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <base data-ice="baseUrl" href="../../../">
-  <title data-ice="title">Which | blush</title>
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/exec.js | blush</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -53,136 +53,36 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import Which from &apos;<span><a href="file/src/builtins/which.js.html#lineNumber6">blush/src/builtins/which.js</a></span>&apos;</code></pre></div>
-  <span data-ice="access">public</span>
-  <span data-ice="kind">class</span>
-  
-  
-  
-  <span data-ice="source">| <span><a href="file/src/builtins/which.js.html#lineNumber6">source</a></span></span>
-</div>
+<div class="content" data-ice="content"><h1 data-ice="title">src/exec.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const parse = require(&apos;./parse&apos;);
+const {evaluate} = require(&apos;./eval&apos;);
+const {PassThrough} = require(&apos;stream&apos;);
 
-<div class="self-detail detail">
-  <h1 data-ice="name">Which</h1>
+module.exports = async function exec (cmd)
+{
+  const pipe_stdout = new PassThrough;
+  let out = &apos;&apos;;
+  return await new Promise((res, rej) =&gt; {
+    pipe_stdout
+    .on(&apos;error&apos;, (err) =&gt; {
+      rej(err);
+    })
+    .on(&apos;data&apos;, (data) =&gt; {
+      out += data.toString();
+    })
+    .on(&apos;end&apos;, () =&gt; {
+      res(out)
+    });
 
-  
-
-  
-  
-  <div class="flat-list" data-ice="extendsChain"><h4>Extends:</h4><div><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span> &#x2192; Which</div></div>
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-</div>
-
-
-
-<div data-ice="constructorSummary"><h2>Constructor Summary</h2><table class="summary" data-ice="summary">
-  <thead><tr><td data-ice="title" colspan="3">Public Constructor</td></tr></thead>
-  <tbody>
-  
-  <tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/builtins/which.js~Which.html#instance-constructor-constructor">constructor</a></span></span><span class="code" data-ice="signature">()</span>
-        </p>
-      </div>
-      <div>
-        
-        
-        
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-</tbody>
-</table>
-</div>
-
-
-
-
-
-
-
-<div data-ice="constructorDetails"><h2 data-ice="title">Public Constructors</h2>
-
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-constructor-constructor">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span class="code" data-ice="name">constructor</span><span class="code" data-ice="signature">()</span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/builtins/which.js.html#lineNumber8">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-</div>
-
+    try {
+      evaluate(parse(cmd+&apos;\n&apos;), {pipe_stdout});
+    }
+    catch (err) {
+      rej(err);
+    }
+  });
+}
+</code></pre>
 
 </div>
 

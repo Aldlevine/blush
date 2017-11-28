@@ -1,11 +1,12 @@
+const exec = require('./exec');
 const parse = require('./parse');
 const parseExitCode = require('./utils/parse-exit-code');
 const {evaluate} = require('./eval');
 const glob = require('glob');
 const readline = require('readline')
 const path = require('path');
-const log = require('./debug')('blush:repl');
-const chalk = require('chalk');
+const log = require('./utils/debug')('blush:repl');
+const chalk = require('chalk').constructor({level: 2});
 const os = require('os');
 
 const REPL = module.exports = class REPL
@@ -34,33 +35,47 @@ const REPL = module.exports = class REPL
     });
   }
 
-  renderPrompt ()
+  async renderPrompt ()
   {
+
+    let cwd = (await exec('pwd -L || cd'))
+    .replace(/\n/g, '')
+    .replace(RegExp('^'+os.homedir()), '~')
+    .replace(/(?!^)(\/|\\)/g, chalk`{dim.bgHex('#555')   }`)
+    .replace(/^\//, chalk`{bgHex('#555') / }{dim.bgHex('#555')  }`);
+
+    // let branch = (await exec('git rev-parse --abbrev-ref HEAD || echo'))
+    // .replace(/\n/g, '');
+    let branch = '';
+    if (branch.length) branch = ' @ '+branch;
+
+    let name = chalk`{bold.white.bgHex('#169')  blush }{hex('#169').bgHex('#555') }`;
+
     return this.status == 0
-    ? chalk`{green [0]}{gray [${process.cwd()}]$} `
-    : chalk`{red [${this.status}]}{gray [${process.cwd()}]$} `;
+    ? chalk`{bold.hex('#160').bgHex('#be0')  0 }{hex('#be0').bgHex('#169') }${name}{bgHex('#555')  ${cwd} ${branch}}{hex('#555') } `
+    : chalk`{bold.white.bgHex('#700')  ${this.status} }{hex('#700').bgHex('#169') }${name}{bgHex('#555')  ${cwd} ${branch}}{hex('#555') } `;
   }
 
-  setPrompt ()
+  async setPrompt ()
   {
-    this.rl.setPrompt(this.renderPrompt());
+    this.rl.setPrompt(await this.renderPrompt());
   }
 
   async start ()
   {
-    this.startReadline();
+    await this.startReadline();
 
     // TODO: Do something more elegant to load dotfiles.
     await this.evaluate('source ~/.blushrc; source .blushrc; echo -n');
   }
 
-  startReadline ()
+  async startReadline ()
   {
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
       completer: this.completer,
-      prompt: this.renderPrompt(),
+      prompt: await this.renderPrompt(),
     })
 
     this.rl.history = this.history;
@@ -97,17 +112,19 @@ const REPL = module.exports = class REPL
       ast = parse(cmd+'\n');
     }
     catch (err) {
-      this.rl.setPrompt(chalk`{red [1]}{gray [${process.cwd()}]$} `);
+      this.status = 1;
+      await this.setPrompt();
       console.error(err.message);
       return;
     }
 
-    // ast = [];
     if (!ast) {
-      console.error('invalid syntax:\n\nUnexpected end of input\n')
+      console.error('blush: invalid syntax:\n\nUnexpected end of input\n')
       this.status = 1;
-      return this.setPrompt();
+      return await this.setPrompt();
     }
+
+    if (!ast.body) return;
 
     log('stop');
     this.stopReadline();
@@ -118,55 +135,44 @@ const REPL = module.exports = class REPL
       this.status = 0;
     }, (err) => {
       // catch
-      if ((this.status = parseExitCode(err)) == -1) {
-        console.error(err);
+      log(err);
+      if (isNaN(err)) {
+        console.error('blush:', err.message || err);
       }
+      this.status = parseExitCode(err);
     })
-    .then(() => {
+    .then(async () => {
       // finally
       log('resume');
-      this.startReadline();
+      await this.startReadline();
     })
-  }
-
-  handleError (err)
-  {
-    // exit code
-    if (!isNaN(err)) {
-    }
-    // signal
-    else if (typeof err === 'string') {
-    }
-    // error
-    else if (err && err instanceof Error) {
-      switch (err.errno) {
-        case 'ECONNRESET':
-        case 'EPIPE':
-          break;
-        case 'ENOENT':
-          console.error('blush: command not found:', err.path);
-          break;
-        default:
-          console.error(err.message);
-      }
-    }
   }
 
   /** Lame completer */
   completer (line, callback)
   {
-    const paths = process.env.PATH.split(path.delimiter);
-    let idx = 0;
-    let res = [];
-    const found = paths.map((p) => {
-      glob(path.join(p,line+'*'), (err, files) => {
-        if (!err) {
-          res.push(...files.map((f) => path.basename(f)));
-        }
-        if (++idx == paths.length) {
-          callback(null, [res, line]);
-        }
+    if (/\s*\.\//.test(line)) {
+      // search cwd
+      glob(line+'*', (err, files) => {
+        if (err) return callback(err);
+        callback(null, [files, line]);
       });
-    });
+    }
+    else {
+      // search path
+      const paths = process.env.PATH.split(path.delimiter);
+      let idx = 0;
+      let res = [];
+      const found = paths.map((p) => {
+        glob(path.join(p,line+'*'), (err, files) => {
+          if (err) return callback(err);
+
+          res.push(...files.map((f) => path.basename(f)));
+          if (++idx == paths.length) {
+            callback(null, [res, line]);
+          }
+        });
+      });
+    }
   }
 };

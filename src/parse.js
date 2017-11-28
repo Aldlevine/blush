@@ -2,7 +2,7 @@ const fs = require('fs');
 const {inspect} = require('util');
 const nearley = require('nearley');
 const grammar = require('../dist/grammar');
-const log = require('./debug')('blush:parse');
+const log = require('./utils/debug')('blush:parse');
 
 
 const parse = module.exports = function parse (src)

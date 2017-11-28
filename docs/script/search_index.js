@@ -1,5 +1,11 @@
 window.esdocSearchIndex = [
   [
+    "blush/src/utils/error.js~blusherror",
+    "class/src/utils/error.js~BlushError.html",
+    "<span>BlushError</span> <span class=\"search-result-import-path\">blush/src/utils/error.js</span>",
+    "class"
+  ],
+  [
     "blush/src/builtins/alias.js~builtin",
     "variable/index.html#static-variable-Builtin",
     "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/alias.js</span>",
@@ -63,6 +69,12 @@ window.esdocSearchIndex = [
     "blush/src/interp.js~env",
     "function/index.html#static-function-env",
     "<span>env</span> <span class=\"search-result-import-path\">blush/src/interp.js</span>",
+    "function"
+  ],
+  [
+    "blush/src/exec.js~exec",
+    "function/index.html#static-function-exec",
+    "<span>exec</span> <span class=\"search-result-import-path\">blush/src/exec.js</span>",
     "function"
   ],
   [
@@ -516,6 +528,12 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "src/exec.js",
+    "file/src/exec.js.html",
+    "src/exec.js",
+    "file"
+  ],
+  [
     "src/index.js",
     "file/src/index.js.html",
     "src/index.js",
@@ -532,6 +550,24 @@ window.esdocSearchIndex = [
     "file/src/unit.js.html",
     "src/unit.js",
     "file"
+  ],
+  [
+    "src/utils/error.js",
+    "file/src/utils/error.js.html",
+    "src/utils/error.js",
+    "file"
+  ],
+  [
+    "src/utils/error.js~blusherror#constructor",
+    "class/src/utils/error.js~BlushError.html#instance-constructor-constructor",
+    "src/utils/error.js~BlushError#constructor",
+    "method"
+  ],
+  [
+    "src/utils/error.js~blusherror#errno",
+    "class/src/utils/error.js~BlushError.html#instance-member-errno",
+    "src/utils/error.js~BlushError#errno",
+    "member"
   ],
   [
     "src/utils/locate-command.js",

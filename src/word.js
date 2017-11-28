@@ -1,4 +1,4 @@
-const log = require('debug')('blush:word');
+const log = require('./utils/debug')('blush:word');
 const os = require('os');
 
 const $ = exports;

@@ -29,7 +29,8 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-args">args</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-exec">exec</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-args">args</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-env">env</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-glob">glob</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#builtins">builtins</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~alias.html">alias</a></span></span></li>
@@ -45,7 +46,8 @@
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-exit">exit</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-source">source</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-which">which</a></span></span></li>
-<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#utils">utils</a><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-locateCommand">locateCommand</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#utils">utils</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/error.js~BlushError.html">BlushError</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-locateCommand">locateCommand</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parseExitCode">parseExitCode</a></span></span></li>
 </ul>
 </div>
@@ -54,13 +56,55 @@
 <div class="content" data-ice="content"><h1 data-ice="title">src/index.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
 
+const parseExitCode = require(&apos;./utils/parse-exit-code&apos;);
 const args = process.argv.slice(2);
 
 // TODO: Parse options.
 
-const REPL = require(&apos;./repl&apos;);
-const repl = new REPL();
-repl.start();
+const opts = {
+};
+
+const files = [];
+
+for (let arg of args) {
+  if (arg.charAt(0) == &apos;-&apos;) {
+    // option
+  }
+  else {
+    // file
+    files.push(arg);
+  }
+}
+
+;(async () =&gt; {
+
+  if (files.length) {
+    let exitCode = 0;
+    const parse = require(&apos;./parse&apos;);
+    const {evaluate} = require(&apos;./eval&apos;);
+    for (let file of files) {
+      try {
+        await evaluate(parse.file(file));
+        exitCode = 0;
+      }
+      catch (err) {
+        console.error(err.message);
+        exitCode = err;
+      }
+    }
+    process.exit(parseExitCode(exitCode));
+  }
+  else {
+    const REPL = require(&apos;./repl&apos;);
+    const repl = new REPL();
+    try {
+      await repl.start();
+    }
+    catch (err) {
+      exitCode = err;
+    }
+  }
+})();
 </code></pre>
 
 </div>

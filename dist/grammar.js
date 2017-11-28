@@ -73,7 +73,7 @@ function id(x) {return x[0]; }
 
   const lexer = moo.states({
     main: {
-      WS: /[ \t]/,
+      WS: /[ \t]+/,
       COMMENT: /#.+/,
       LESSAND: '<&',
       GREATAND: '>&',
@@ -197,8 +197,9 @@ var grammar = {
           type: 'list_term',
           value: one(term),
         }) },
-    {"name": "list_item", "symbols": ["pipeline"]},
-    {"name": "list_item", "symbols": ["assign"], "postprocess": id},
+    {"name": "list_item$subexpression$1", "symbols": ["pipeline"]},
+    {"name": "list_item$subexpression$1", "symbols": ["assign"]},
+    {"name": "list_item", "symbols": ["list_item$subexpression$1"], "postprocess": id},
     {"name": "pipeline$ebnf$1$subexpression$1", "symbols": [(lexer.has("TIME") ? {type: "TIME"} : TIME), "__"]},
     {"name": "pipeline$ebnf$1", "symbols": ["pipeline$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "pipeline$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -243,9 +244,10 @@ var grammar = {
           type: 'time',
           // bang: !!one(bang),
         }) },
-    {"name": "command$ebnf$1$subexpression$1$ebnf$1", "symbols": []},
     {"name": "command$ebnf$1$subexpression$1$ebnf$1$subexpression$1", "symbols": ["redir", "_"]},
-    {"name": "command$ebnf$1$subexpression$1$ebnf$1", "symbols": ["command$ebnf$1$subexpression$1$ebnf$1", "command$ebnf$1$subexpression$1$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "command$ebnf$1$subexpression$1$ebnf$1", "symbols": ["command$ebnf$1$subexpression$1$ebnf$1$subexpression$1"]},
+    {"name": "command$ebnf$1$subexpression$1$ebnf$1$subexpression$2", "symbols": ["redir", "_"]},
+    {"name": "command$ebnf$1$subexpression$1$ebnf$1", "symbols": ["command$ebnf$1$subexpression$1$ebnf$1", "command$ebnf$1$subexpression$1$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "command$ebnf$1$subexpression$1", "symbols": ["command$ebnf$1$subexpression$1$ebnf$1", "__"]},
     {"name": "command$ebnf$1", "symbols": ["command$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -267,12 +269,21 @@ var grammar = {
     {"name": "simple_cmd$ebnf$2", "symbols": []},
     {"name": "simple_cmd$ebnf$2$subexpression$1", "symbols": ["__", "loose_word"]},
     {"name": "simple_cmd$ebnf$2", "symbols": ["simple_cmd$ebnf$2", "simple_cmd$ebnf$2$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "simple_cmd", "symbols": ["simple_cmd$ebnf$1", "strict_word", "simple_cmd$ebnf$2"], "postprocess":  ([assign, name, args]) => ({
-          type: 'simple_cmd',
-          params: merge(assign),
-          name: one(name),
-          args: merge(...args),
-        }) },
+    {"name": "simple_cmd", "symbols": ["simple_cmd$ebnf$1", "strict_word", "simple_cmd$ebnf$2"], "postprocess":  ([assign, name, args]) => {
+          name = one(name);
+          args = merge(...args);
+          let dot = false;
+          if (/^\.\//.test(name)) {
+            dot = true;
+          }
+          return {
+            type: 'simple_cmd',
+            params: merge(assign),
+            name,
+            args,
+            dot,
+          }
+        } },
     {"name": "compound_cmd$subexpression$1", "symbols": ["group_cmd"]},
     {"name": "compound_cmd$subexpression$1", "symbols": ["if_cmd"]},
     {"name": "compound_cmd$subexpression$1", "symbols": ["while_cmd"]},
@@ -410,10 +421,17 @@ var grammar = {
           io: 1,
           fname: one(fname),
         }) },
-    {"name": "newline$ebnf$1", "symbols": []},
     {"name": "newline$ebnf$1$subexpression$1", "symbols": [(lexer.has("NL") ? {type: "NL"} : NL)]},
-    {"name": "newline$ebnf$1", "symbols": ["newline$ebnf$1", "newline$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "newline$ebnf$1", "symbols": ["newline$ebnf$1$subexpression$1"]},
+    {"name": "newline$ebnf$1$subexpression$2", "symbols": [(lexer.has("NL") ? {type: "NL"} : NL)]},
+    {"name": "newline$ebnf$1", "symbols": ["newline$ebnf$1", "newline$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "newline", "symbols": ["newline$ebnf$1"], "postprocess": id},
+    {"name": "empty$ebnf$1", "symbols": []},
+    {"name": "empty$ebnf$1$subexpression$1", "symbols": [(lexer.has("WS") ? {type: "WS"} : WS)]},
+    {"name": "empty$ebnf$1$subexpression$1", "symbols": [(lexer.has("NL") ? {type: "NL"} : NL)]},
+    {"name": "empty$ebnf$1$subexpression$1", "symbols": [(lexer.has("COMMENT") ? {type: "COMMENT"} : COMMENT)]},
+    {"name": "empty$ebnf$1", "symbols": ["empty$ebnf$1", "empty$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "empty", "symbols": ["empty$ebnf$1"], "postprocess": () => null},
     {"name": "EMPTY$ebnf$1$subexpression$1", "symbols": [(lexer.has("WS") ? {type: "WS"} : WS)]},
     {"name": "EMPTY$ebnf$1$subexpression$1", "symbols": [(lexer.has("NL") ? {type: "NL"} : NL)]},
     {"name": "EMPTY$ebnf$1$subexpression$1", "symbols": [(lexer.has("COMMENT") ? {type: "COMMENT"} : COMMENT)]},
@@ -423,12 +441,6 @@ var grammar = {
     {"name": "EMPTY$ebnf$1$subexpression$2", "symbols": [(lexer.has("COMMENT") ? {type: "COMMENT"} : COMMENT)]},
     {"name": "EMPTY$ebnf$1", "symbols": ["EMPTY$ebnf$1", "EMPTY$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "EMPTY", "symbols": ["EMPTY$ebnf$1"], "postprocess": () => null},
-    {"name": "empty$ebnf$1", "symbols": []},
-    {"name": "empty$ebnf$1$subexpression$1", "symbols": [(lexer.has("WS") ? {type: "WS"} : WS)]},
-    {"name": "empty$ebnf$1$subexpression$1", "symbols": [(lexer.has("NL") ? {type: "NL"} : NL)]},
-    {"name": "empty$ebnf$1$subexpression$1", "symbols": [(lexer.has("COMMENT") ? {type: "COMMENT"} : COMMENT)]},
-    {"name": "empty$ebnf$1", "symbols": ["empty$ebnf$1", "empty$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "empty", "symbols": ["empty$ebnf$1"], "postprocess": () => null},
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1$subexpression$1", "symbols": [(lexer.has("WS") ? {type: "WS"} : WS)]},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", "_$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},

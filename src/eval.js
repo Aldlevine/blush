@@ -2,7 +2,7 @@ const $ = exports;
 const locateCommand = require('./utils/locate-command');
 const parseExitCode = require('./utils/parse-exit-code');
 const builtins = require('./builtins');
-const log = require('./debug')('blush:eval');
+const log = require('./utils/debug')('blush:eval');
 const {PassThrough} = require('stream');
 const {spawn} = require('child_process');
 const fs = require('fs');
@@ -130,7 +130,7 @@ $.pipeline = async function (node, ctx)
       exitCode = 0;
     }
     else {
-      exitCode = parseExitCode(err);
+      exitCode = err;
     }
   }
 
@@ -163,7 +163,7 @@ $.pipeline = async function (node, ctx)
  */
 $.simple_cmd = async function (node, ctx)
 {
-  let name = $.word(node.name);
+  let name = origName = $.word(node.name);
   let args = node.args.map($.word);
 
   log('evaluate simple_cmd "%s"', name);
@@ -197,15 +197,19 @@ $.simple_cmd = async function (node, ctx)
       args = [...aliasArgs, ...args];
     }
     if (name in builtins) {
-      proc = new builtins[name](name, args, {stdio});
+      proc = new builtins[name](name, args, {stdio, argv0: origName});
     }
     else {
-      const cmdpath = locateCommand(name);
-      if (!cmdpath) {
-        process.stderr.write(`blush: command not found: ${name}\n`);
-        return rej(127);
+      let cmdpath;
+
+      try {
+        cmdpath = locateCommand(name, node.dot);
       }
-      proc = spawn(cmdpath, args, {stdio});
+      catch (err) {
+        return rej(err);
+      }
+
+      proc = spawn(cmdpath, args, {stdio, argv0: origName});
     }
 
     if (ctx.pipe_stdin) {
@@ -245,7 +249,6 @@ $.simple_cmd = async function (node, ctx)
           stream.end();
         }
       });
-      // proc.stdio[io].pipe(redirs[io]);
     }
 
     if (ctx.pipe_stdout) {
@@ -263,7 +266,7 @@ $.simple_cmd = async function (node, ctx)
 
     proc
     .on('exit', (code, signal) => {
-      log('exit "%s"', name);
+      log('exit "%s"', origName);
       if (code || signal) return rej(code || signal);
       res();
     })
@@ -271,23 +274,47 @@ $.simple_cmd = async function (node, ctx)
       rej(err);
     })
   });
-
-  log('evaluate simple_cmd');
 }
 
 $.group_cmd = async function (node, ctx)
 {
+  log('evaluate group_cmd');
   return await $.evaluate(node.list, ctx);
+}
+
+$.if_cmd = async function (node, ctx)
+{
+  log('evaluate if_cmd');
+  let exitCode = 0;
+  await $.evaluate(node.if, ctx)
+  .then(async () => {
+    try {
+      await $.evaluate(node.then, ctx);
+    }
+    catch (err) { exitCode = err }
+  })
+  .catch(async (err) => {
+    try {
+      await $.evaluate(node.else, ctx);
+    }
+    catch (err) { exitCode = err }
+  })
+
+  if (exitCode !== 0) {
+    throw exitCode;
+  }
 }
 
 $.redir_ofile = async function (node, ctx)
 {
+  log('evaluate redir_ofile');
   const fname = $.word(node.fname);
   return {io: node.io, stream: fs.createWriteStream(fname)};
 }
 
 $.assign = async function (node, ctx)
 {
+  log('evaluate assign');
   const {name, value} = node;
   if (value) {
     process.env[name] = $.word(value);

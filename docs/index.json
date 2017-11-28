@@ -960,7 +960,7 @@
     "__docId__": 69,
     "kind": "file",
     "name": "src/builtins/cd.js",
-    "content": "const Builtin = require('./builtin');\n\nmodule.exports = class Cd extends Builtin\n{\n  constructor (name, args, opts)\n  {\n    super(name, args, opts);\n    process.chdir(args.join(' '));\n    process.nextTick(() => this.emit('exit', 0));\n  }\n}\n",
+    "content": "const Builtin = require('./builtin');\nconst os = require('os');\n\nmodule.exports = class Cd extends Builtin\n{\n  constructor (name, args, opts)\n  {\n    super(name, args, opts);\n    if (args.length == 0) {\n      process.chdir(os.homedir());\n    }\n    else {\n      process.chdir(args.join(' '));\n    }\n    process.nextTick(() => this.emit('exit', 0));\n  }\n}\n",
     "static": true,
     "longname": "/mnt/fast/Projects/blush/src/builtins/cd.js",
     "access": "public",
@@ -990,6 +990,27 @@
   },
   {
     "__docId__": 71,
+    "kind": "variable",
+    "name": "os",
+    "memberof": "src/builtins/cd.js",
+    "static": true,
+    "longname": "src/builtins/cd.js~os",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/builtins/cd.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 72,
     "kind": "class",
     "name": "Cd",
     "memberof": "src/builtins/cd.js",
@@ -1000,7 +1021,7 @@
     "importPath": "blush/src/builtins/cd.js",
     "importStyle": "Cd",
     "description": null,
-    "lineNumber": 3,
+    "lineNumber": 4,
     "undocument": true,
     "interface": false,
     "extends": [
@@ -1008,7 +1029,7 @@
     ]
   },
   {
-    "__docId__": 72,
+    "__docId__": 73,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/builtins/cd.js~Cd",
@@ -1018,11 +1039,11 @@
     "longname": "src/builtins/cd.js~Cd#constructor",
     "access": "public",
     "description": null,
-    "lineNumber": 5,
+    "lineNumber": 6,
     "undocument": true
   },
   {
-    "__docId__": 73,
+    "__docId__": 74,
     "kind": "file",
     "name": "src/builtins/exit.js",
     "content": "const Builtin = require('./builtin');\n\nmodule.exports = class Exit extends Builtin\n{\n  constructor (name, args, opts)\n  {\n    super(name, args, opts);\n\n    if (args.length > 1) {\n      this._stdout.write('exit: too many arguments');\n    }\n    else {\n      const exitCode = args[0] || 0;\n      process.nextTick(() => process.exit(exitCode));\n    }\n  }\n}\n\n",
@@ -1033,7 +1054,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 74,
+    "__docId__": 75,
     "kind": "variable",
     "name": "Builtin",
     "memberof": "src/builtins/exit.js",
@@ -1054,7 +1075,7 @@
     "ignore": true
   },
   {
-    "__docId__": 75,
+    "__docId__": 76,
     "kind": "class",
     "name": "Exit",
     "memberof": "src/builtins/exit.js",
@@ -1073,7 +1094,7 @@
     ]
   },
   {
-    "__docId__": 76,
+    "__docId__": 77,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/builtins/exit.js~Exit",
@@ -1087,7 +1108,7 @@
     "undocument": true
   },
   {
-    "__docId__": 77,
+    "__docId__": 78,
     "kind": "file",
     "name": "src/builtins/index.js",
     "content": "exports.cd = require('./cd');\nexports.which = require('./which');\n\nconst {alias, unalias} = require('./alias');\nexports.alias = alias;\nexports.unalias = unalias;\n\nexports.source = require('./source');\nexports.exit = require('./exit');\n",
@@ -1098,7 +1119,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 78,
+    "__docId__": 79,
     "kind": "variable",
     "name": "cd",
     "memberof": "src/builtins/index.js",
@@ -1118,7 +1139,7 @@
     }
   },
   {
-    "__docId__": 79,
+    "__docId__": 80,
     "kind": "variable",
     "name": "which",
     "memberof": "src/builtins/index.js",
@@ -1138,7 +1159,7 @@
     }
   },
   {
-    "__docId__": 80,
+    "__docId__": 81,
     "kind": "variable",
     "name": "alias",
     "memberof": "src/builtins/index.js",
@@ -1159,7 +1180,7 @@
     "ignore": true
   },
   {
-    "__docId__": 81,
+    "__docId__": 82,
     "kind": "variable",
     "name": "source",
     "memberof": "src/builtins/index.js",
@@ -1179,7 +1200,7 @@
     }
   },
   {
-    "__docId__": 82,
+    "__docId__": 83,
     "kind": "variable",
     "name": "exit",
     "memberof": "src/builtins/index.js",
@@ -1199,7 +1220,7 @@
     }
   },
   {
-    "__docId__": 83,
+    "__docId__": 84,
     "kind": "file",
     "name": "src/builtins/source.js",
     "content": "const Builtin = require('./builtin');\nconst parse = require('../parse');\nconst parseExitCode = require('../utils/parse-exit-code');\n\nmodule.exports = class Source extends Builtin\n{\n  constructor (name, args, opts)\n  {\n    super(name, args, opts);\n\n    const {evaluate} = require('../eval');\n\n    let exitCode = 0;\n\n    if (args.length == 0) {\n      this._stderr.write('source: not enough arguments\\n');\n      process.nextTick(() => this.emit('exit', 1));\n    }\n    else {\n      let ast = parse.file(args[0]);\n      evaluate(ast)\n      .then(() => {\n        process.nextTick(() => this.emit('exit', 0));\n      }, (err) => {\n        process.nextTick(() => this.emit(err));\n      })\n    }\n\n  }\n}\n\n",
@@ -1210,7 +1231,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 84,
+    "__docId__": 85,
     "kind": "variable",
     "name": "Builtin",
     "memberof": "src/builtins/source.js",
@@ -1231,7 +1252,7 @@
     "ignore": true
   },
   {
-    "__docId__": 85,
+    "__docId__": 86,
     "kind": "variable",
     "name": "parse",
     "memberof": "src/builtins/source.js",
@@ -1252,7 +1273,7 @@
     "ignore": true
   },
   {
-    "__docId__": 86,
+    "__docId__": 87,
     "kind": "variable",
     "name": "parseExitCode",
     "memberof": "src/builtins/source.js",
@@ -1273,7 +1294,7 @@
     "ignore": true
   },
   {
-    "__docId__": 87,
+    "__docId__": 88,
     "kind": "class",
     "name": "Source",
     "memberof": "src/builtins/source.js",
@@ -1292,7 +1313,7 @@
     ]
   },
   {
-    "__docId__": 88,
+    "__docId__": 89,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/builtins/source.js~Source",
@@ -1306,7 +1327,7 @@
     "undocument": true
   },
   {
-    "__docId__": 89,
+    "__docId__": 90,
     "kind": "file",
     "name": "src/builtins/which.js",
     "content": "const Builtin = require('./builtin');\nconst {alias} = require('./alias');\nconst glob = require('glob');\nconst path = require('path');\n\nmodule.exports = class Which extends Builtin\n{\n  constructor (name, args, opts)\n  {\n    super(name, args, opts);\n    const builtins = require('./index');\n    const cmdopts = {\n      all: false,\n      patterns: false,\n      path: false,\n      resolveSymlink: false,\n      commandType: false,\n    }\n    const commands = [];\n    const paths = process.env.PATH.split(path.delimiter);\n    let exitCode = 0;\n\n    for (let arg of args) {\n      switch (arg) {\n        case '-a': cmdopts.all = true; break;\n        case '-m': cmdopts.patterns = true; break;\n        case '-p': cmdopts.path = true; break;\n        case '-s': cmdopts.resolveSymlink = true; break;\n        case '-w': cmdopts.commandType = true; break;\n        default:\n          if (arg.charAt(0) == '-') {\n            this._stderr.write(`which: bad option: ${arg}\\n`);\n            exitCode = 1;\n            break;\n          }\n          commands.push(arg);\n      }\n    }\n\n    if (!exitCode) {\n      for (let cmd of commands) {\n        let aliasValue = alias.getAlias(cmd);\n        if (aliasValue) {\n          this._stdout.write(`${cmd}: aliased to ${aliasValue}\\n`);\n\n          if (!cmdopts.all) continue;\n        }\n        if (cmd in builtins) {\n          this._stdout.write(`${cmd}: shell built-in command\\n`);\n\n          if (!cmdopts.all) continue;\n        }\n        const pattern = '{'+paths.map((p) => path.join(p, cmd)).join(',')+'}';\n        const result = glob.sync(pattern);\n        if (result.length > 0) {\n          if (cmdopts.all) {\n            result.map((p) => this._stdout.write(p+'\\n'));\n          }\n          else {\n            this._stdout.write(result[0]+'\\n');\n          }\n        }\n        else {\n          this._stderr.write(`${cmd} not found\\n`);\n          exitCode = 1;\n        }\n      }\n    }\n\n    process.nextTick(() => this.emit('exit', exitCode));\n  }\n}\n",
@@ -1317,7 +1338,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 90,
+    "__docId__": 91,
     "kind": "variable",
     "name": "Builtin",
     "memberof": "src/builtins/which.js",
@@ -1338,7 +1359,7 @@
     "ignore": true
   },
   {
-    "__docId__": 91,
+    "__docId__": 92,
     "kind": "variable",
     "name": "alias",
     "memberof": "src/builtins/which.js",
@@ -1359,7 +1380,7 @@
     "ignore": true
   },
   {
-    "__docId__": 92,
+    "__docId__": 93,
     "kind": "variable",
     "name": "glob",
     "memberof": "src/builtins/which.js",
@@ -1380,7 +1401,7 @@
     "ignore": true
   },
   {
-    "__docId__": 93,
+    "__docId__": 94,
     "kind": "variable",
     "name": "path",
     "memberof": "src/builtins/which.js",
@@ -1401,7 +1422,7 @@
     "ignore": true
   },
   {
-    "__docId__": 94,
+    "__docId__": 95,
     "kind": "class",
     "name": "Which",
     "memberof": "src/builtins/which.js",
@@ -1420,7 +1441,7 @@
     ]
   },
   {
-    "__docId__": 95,
+    "__docId__": 96,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/builtins/which.js~Which",
@@ -1434,10 +1455,10 @@
     "undocument": true
   },
   {
-    "__docId__": 96,
+    "__docId__": 97,
     "kind": "file",
     "name": "src/eval.js",
-    "content": "const $ = exports;\nconst locateCommand = require('./utils/locate-command');\nconst parseExitCode = require('./utils/parse-exit-code');\nconst builtins = require('./builtins');\nconst log = require('./debug')('blush:eval');\nconst {PassThrough} = require('stream');\nconst {spawn} = require('child_process');\nconst fs = require('fs');\n\n$.evaluate = async function (node, ctx={})\n{\n  if (node instanceof Array) {\n    for (let node of node) {\n      await $.evaluate(node);\n    }\n  }\n\n  if (!node || !(node.type in $)) {\n    return log('node type \\'%s\\' not implemented', node && node.type || node);\n  }\n\n return await $[node.type](node, ctx);\n}\n\n$.program = async function (node, ctx)\n{\n  log('evaluate program');\n  const {body} = node;\n  return body && await $.evaluate(body, ctx);\n}\n\n$.list = async function (node, ctx)\n{\n  log('evaluate list');\n  const {commands} = node;\n  const {pipe_stdin, pipe_stdout} = ctx;\n\n  let exitCode = 0;\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd = commands[i];\n    const cmd_ctx = {};\n    const modifier = cmd.modifier && await $.evaluate(cmd.modifier);\n\n    log('modifier: %s; exit-code: %d', modifier, exitCode);\n    if (modifier == 'and' && !!exitCode) {\n      continue;\n    }\n    if (modifier == 'or' && !exitCode) {\n      continue;\n    }\n\n    if (pipe_stdin) {\n      cmd_ctx.pipe_stdin = pipe_stdin;\n    }\n\n    if (pipe_stdout) {\n      cmd_ctx.pipe_stdout = new PassThrough;\n      cmd_ctx.pipe_stdout\n      .on('data', (data) => {\n        pipe_stdout.write(data);\n      })\n      .on('error', (err) => {\n      })\n    }\n\n    try {\n      await $.evaluate(cmd, cmd_ctx);\n      exitCode = 0;\n    }\n    catch (err) {\n      log('command errored');\n      exitCode = err;\n      // throw err;\n    }\n  }\n\n  if (pipe_stdout) {\n    pipe_stdout.end();\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\nconst NS_PER_SEC = 1e9;\nconst US_PER_SEC = 1e6;\nconst MS_PER_SEC = 1e3;\n\n$.pipeline = async function (node, ctx)\n{\n  log('evaluate pipeline');\n\n  const promises = [];\n  const {commands, time, negate} = node;\n  const {pipe_stdin, pipe_stdout, redir} = ctx;\n\n  let exitCode = 0;\n  let stream = null;\n\n  let start;\n  if (time) {\n    start = process.hrtime();\n  }\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd_ctx = {};\n    const cmd = commands[i];\n\n    if (i == 0) cmd_ctx.pipe_stdin = pipe_stdin;\n    else cmd_ctx.pipe_stdin = stream;\n\n    if (i == ii-1) cmd_ctx.pipe_stdout = pipe_stdout;\n    else cmd_ctx.pipe_stdout = stream = new PassThrough;\n\n    cmd_ctx.redir = redir;\n\n    promises.push($.evaluate(cmd, cmd_ctx));\n  }\n\n  try {\n    await Promise.all(promises);\n    if (negate) {\n      exitCode = 1;\n    }\n  }\n  catch (err) {\n    if (negate) {\n      exitCode = 0;\n    }\n    else {\n      exitCode = parseExitCode(err);\n    }\n  }\n\n  if (time) {\n    const d = process.hrtime(start);\n    let time = d[0] * NS_PER_SEC + d[1];\n    let unit = 'ns';\n    if (time > NS_PER_SEC) {\n      time /= NS_PER_SEC;\n      unit = 's';\n    }\n    else if (time > NS_PER_SEC/MS_PER_SEC) {\n      time /= NS_PER_SEC/MS_PER_SEC;\n      unit = 'ms';\n    }\n    else if (time > NS_PER_SEC/US_PER_SEC) {\n      time /= NS_PER_SEC/US_PER_SEC;\n      unit = 'us';\n    }\n    console.log(`${time.toFixed(2)}${unit}`);\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\n/**\n * TODO: restore stdin if not consumed\n */\n$.simple_cmd = async function (node, ctx)\n{\n  let name = $.word(node.name);\n  let args = node.args.map($.word);\n\n  log('evaluate simple_cmd \"%s\"', name);\n\n  const stdio = [0,1,2];\n\n  if (ctx.pipe_stdin) {\n    log('pipe into \"%s\"', name);\n    stdio[0] = 'pipe';\n  }\n\n  if (ctx.pipe_stdout) {\n    log('pipe out of \"%s\"', name);\n    stdio[1] = 'pipe';\n  }\n\n  const redirs = {};\n  for (let r of node.redir) {\n    const {io, stream} = await $.evaluate(r);\n    stdio[io] = 'pipe';\n    redirs[io] = redirs[io] || [];\n    redirs[io].push(stream);\n  }\n\n  await new Promise((res, rej) => {\n    let proc;\n    let alias = builtins.alias.getAlias(name);\n    if (alias) {\n      let [aliasName, ...aliasArgs] = alias.split(' ');\n      name = aliasName;\n      args = [...aliasArgs, ...args];\n    }\n    if (name in builtins) {\n      proc = new builtins[name](name, args, {stdio});\n    }\n    else {\n      const cmdpath = locateCommand(name);\n      if (!cmdpath) {\n        process.stderr.write(`blush: command not found: ${name}\\n`);\n        return rej(127);\n      }\n      proc = spawn(cmdpath, args, {stdio});\n    }\n\n    if (ctx.pipe_stdin) {\n      if (ctx.pipe_stdin.readable) {\n        ctx.pipe_stdin\n        .on('data', (data) => {\n          if (proc.stdin.writable) {\n            proc.stdin.write(data);\n          }\n        })\n        .on('end', () => {\n          proc.stdin.end();\n        })\n        .on('error', (err) => {\n          rej(err);\n        })\n\n        proc.stdin\n        .on('error', (err) => {\n          rej(err);\n        })\n      }\n      else {\n        proc.stdin.end();\n      }\n    }\n\n    for (let io in redirs) {\n      proc.stdio[io]\n      .on('data', (data) => {\n        for (let stream of redirs[io]) {\n          stream.write(data);\n        }\n      })\n      .on('end', () => {\n        for (let stream of redirs[io]) {\n          stream.end();\n        }\n      });\n      // proc.stdio[io].pipe(redirs[io]);\n    }\n\n    if (ctx.pipe_stdout) {\n      proc.stdout\n      .on('data', (data) => {\n        ctx.pipe_stdout.write(data);\n      })\n      .on('end', () => {\n        ctx.pipe_stdout.end();\n      })\n      .on('error', (err) => {\n        rej(err);\n      })\n    }\n\n    proc\n    .on('exit', (code, signal) => {\n      log('exit \"%s\"', name);\n      if (code || signal) return rej(code || signal);\n      res();\n    })\n    .on('error', (err) => {\n      rej(err);\n    })\n  });\n\n  log('evaluate simple_cmd');\n}\n\n$.group_cmd = async function (node, ctx)\n{\n  return await $.evaluate(node.list, ctx);\n}\n\n$.redir_ofile = async function (node, ctx)\n{\n  const fname = $.word(node.fname);\n  return {io: node.io, stream: fs.createWriteStream(fname)};\n}\n\n$.assign = async function (node, ctx)\n{\n  const {name, value} = node;\n  if (value) {\n    process.env[name] = $.word(value);\n  }\n  else {\n    delete process.env[name];\n  }\n}\n\n$.AND = function (node, ctx)\n{\n  return 'and';\n}\n\n$.OR = function (node, ctx)\n{\n  return 'or';\n}\n\n$.word = require('./word').evaluate;\n",
+    "content": "const $ = exports;\nconst locateCommand = require('./utils/locate-command');\nconst parseExitCode = require('./utils/parse-exit-code');\nconst builtins = require('./builtins');\nconst log = require('./utils/debug')('blush:eval');\nconst {PassThrough} = require('stream');\nconst {spawn} = require('child_process');\nconst fs = require('fs');\n\n$.evaluate = async function (node, ctx={})\n{\n  if (node instanceof Array) {\n    for (let node of node) {\n      await $.evaluate(node);\n    }\n  }\n\n  if (!node || !(node.type in $)) {\n    return log('node type \\'%s\\' not implemented', node && node.type || node);\n  }\n\n return await $[node.type](node, ctx);\n}\n\n$.program = async function (node, ctx)\n{\n  log('evaluate program');\n  const {body} = node;\n  return body && await $.evaluate(body, ctx);\n}\n\n$.list = async function (node, ctx)\n{\n  log('evaluate list');\n  const {commands} = node;\n  const {pipe_stdin, pipe_stdout} = ctx;\n\n  let exitCode = 0;\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd = commands[i];\n    const cmd_ctx = {};\n    const modifier = cmd.modifier && await $.evaluate(cmd.modifier);\n\n    log('modifier: %s; exit-code: %d', modifier, exitCode);\n    if (modifier == 'and' && !!exitCode) {\n      continue;\n    }\n    if (modifier == 'or' && !exitCode) {\n      continue;\n    }\n\n    if (pipe_stdin) {\n      cmd_ctx.pipe_stdin = pipe_stdin;\n    }\n\n    if (pipe_stdout) {\n      cmd_ctx.pipe_stdout = new PassThrough;\n      cmd_ctx.pipe_stdout\n      .on('data', (data) => {\n        pipe_stdout.write(data);\n      })\n      .on('error', (err) => {\n      })\n    }\n\n    try {\n      await $.evaluate(cmd, cmd_ctx);\n      exitCode = 0;\n    }\n    catch (err) {\n      log('command errored');\n      exitCode = err;\n      // throw err;\n    }\n  }\n\n  if (pipe_stdout) {\n    pipe_stdout.end();\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\nconst NS_PER_SEC = 1e9;\nconst US_PER_SEC = 1e6;\nconst MS_PER_SEC = 1e3;\n\n$.pipeline = async function (node, ctx)\n{\n  log('evaluate pipeline');\n\n  const promises = [];\n  const {commands, time, negate} = node;\n  const {pipe_stdin, pipe_stdout, redir} = ctx;\n\n  let exitCode = 0;\n  let stream = null;\n\n  let start;\n  if (time) {\n    start = process.hrtime();\n  }\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd_ctx = {};\n    const cmd = commands[i];\n\n    if (i == 0) cmd_ctx.pipe_stdin = pipe_stdin;\n    else cmd_ctx.pipe_stdin = stream;\n\n    if (i == ii-1) cmd_ctx.pipe_stdout = pipe_stdout;\n    else cmd_ctx.pipe_stdout = stream = new PassThrough;\n\n    cmd_ctx.redir = redir;\n\n    promises.push($.evaluate(cmd, cmd_ctx));\n  }\n\n  try {\n    await Promise.all(promises);\n    if (negate) {\n      exitCode = 1;\n    }\n  }\n  catch (err) {\n    if (negate) {\n      exitCode = 0;\n    }\n    else {\n      exitCode = err;\n    }\n  }\n\n  if (time) {\n    const d = process.hrtime(start);\n    let time = d[0] * NS_PER_SEC + d[1];\n    let unit = 'ns';\n    if (time > NS_PER_SEC) {\n      time /= NS_PER_SEC;\n      unit = 's';\n    }\n    else if (time > NS_PER_SEC/MS_PER_SEC) {\n      time /= NS_PER_SEC/MS_PER_SEC;\n      unit = 'ms';\n    }\n    else if (time > NS_PER_SEC/US_PER_SEC) {\n      time /= NS_PER_SEC/US_PER_SEC;\n      unit = 'us';\n    }\n    console.log(`${time.toFixed(2)}${unit}`);\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\n/**\n * TODO: restore stdin if not consumed\n */\n$.simple_cmd = async function (node, ctx)\n{\n  let name = origName = $.word(node.name);\n  let args = node.args.map($.word);\n\n  log('evaluate simple_cmd \"%s\"', name);\n\n  const stdio = [0,1,2];\n\n  if (ctx.pipe_stdin) {\n    log('pipe into \"%s\"', name);\n    stdio[0] = 'pipe';\n  }\n\n  if (ctx.pipe_stdout) {\n    log('pipe out of \"%s\"', name);\n    stdio[1] = 'pipe';\n  }\n\n  const redirs = {};\n  for (let r of node.redir) {\n    const {io, stream} = await $.evaluate(r);\n    stdio[io] = 'pipe';\n    redirs[io] = redirs[io] || [];\n    redirs[io].push(stream);\n  }\n\n  await new Promise((res, rej) => {\n    let proc;\n    let alias = builtins.alias.getAlias(name);\n    if (alias) {\n      let [aliasName, ...aliasArgs] = alias.split(' ');\n      name = aliasName;\n      args = [...aliasArgs, ...args];\n    }\n    if (name in builtins) {\n      proc = new builtins[name](name, args, {stdio, argv0: origName});\n    }\n    else {\n      let cmdpath;\n\n      try {\n        cmdpath = locateCommand(name, node.dot);\n      }\n      catch (err) {\n        return rej(err);\n      }\n\n      proc = spawn(cmdpath, args, {stdio, argv0: origName});\n    }\n\n    if (ctx.pipe_stdin) {\n      if (ctx.pipe_stdin.readable) {\n        ctx.pipe_stdin\n        .on('data', (data) => {\n          if (proc.stdin.writable) {\n            proc.stdin.write(data);\n          }\n        })\n        .on('end', () => {\n          proc.stdin.end();\n        })\n        .on('error', (err) => {\n          rej(err);\n        })\n\n        proc.stdin\n        .on('error', (err) => {\n          rej(err);\n        })\n      }\n      else {\n        proc.stdin.end();\n      }\n    }\n\n    for (let io in redirs) {\n      proc.stdio[io]\n      .on('data', (data) => {\n        for (let stream of redirs[io]) {\n          stream.write(data);\n        }\n      })\n      .on('end', () => {\n        for (let stream of redirs[io]) {\n          stream.end();\n        }\n      });\n    }\n\n    if (ctx.pipe_stdout) {\n      proc.stdout\n      .on('data', (data) => {\n        ctx.pipe_stdout.write(data);\n      })\n      .on('end', () => {\n        ctx.pipe_stdout.end();\n      })\n      .on('error', (err) => {\n        rej(err);\n      })\n    }\n\n    proc\n    .on('exit', (code, signal) => {\n      log('exit \"%s\"', origName);\n      if (code || signal) return rej(code || signal);\n      res();\n    })\n    .on('error', (err) => {\n      rej(err);\n    })\n  });\n}\n\n$.group_cmd = async function (node, ctx)\n{\n  log('evaluate group_cmd');\n  return await $.evaluate(node.list, ctx);\n}\n\n$.if_cmd = async function (node, ctx)\n{\n  log('evaluate if_cmd');\n  let exitCode = 0;\n  await $.evaluate(node.if, ctx)\n  .then(async () => {\n    try {\n      await $.evaluate(node.then, ctx);\n    }\n    catch (err) { exitCode = err }\n  })\n  .catch(async (err) => {\n    try {\n      await $.evaluate(node.else, ctx);\n    }\n    catch (err) { exitCode = err }\n  })\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\n$.redir_ofile = async function (node, ctx)\n{\n  log('evaluate redir_ofile');\n  const fname = $.word(node.fname);\n  return {io: node.io, stream: fs.createWriteStream(fname)};\n}\n\n$.assign = async function (node, ctx)\n{\n  log('evaluate assign');\n  const {name, value} = node;\n  if (value) {\n    process.env[name] = $.word(value);\n  }\n  else {\n    delete process.env[name];\n  }\n}\n\n$.AND = function (node, ctx)\n{\n  return 'and';\n}\n\n$.OR = function (node, ctx)\n{\n  return 'or';\n}\n\n$.word = require('./word').evaluate;\n",
     "static": true,
     "longname": "/mnt/fast/Projects/blush/src/eval.js",
     "access": "public",
@@ -1445,7 +1466,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 97,
+    "__docId__": 98,
     "kind": "variable",
     "name": "$",
     "memberof": "src/eval.js",
@@ -1466,7 +1487,7 @@
     "ignore": true
   },
   {
-    "__docId__": 98,
+    "__docId__": 99,
     "kind": "variable",
     "name": "locateCommand",
     "memberof": "src/eval.js",
@@ -1487,7 +1508,7 @@
     "ignore": true
   },
   {
-    "__docId__": 99,
+    "__docId__": 100,
     "kind": "variable",
     "name": "parseExitCode",
     "memberof": "src/eval.js",
@@ -1508,7 +1529,7 @@
     "ignore": true
   },
   {
-    "__docId__": 100,
+    "__docId__": 101,
     "kind": "variable",
     "name": "builtins",
     "memberof": "src/eval.js",
@@ -1529,7 +1550,7 @@
     "ignore": true
   },
   {
-    "__docId__": 101,
+    "__docId__": 102,
     "kind": "variable",
     "name": "log",
     "memberof": "src/eval.js",
@@ -1550,7 +1571,7 @@
     "ignore": true
   },
   {
-    "__docId__": 102,
+    "__docId__": 103,
     "kind": "variable",
     "name": "PassThrough",
     "memberof": "src/eval.js",
@@ -1571,7 +1592,7 @@
     "ignore": true
   },
   {
-    "__docId__": 103,
+    "__docId__": 104,
     "kind": "variable",
     "name": "spawn",
     "memberof": "src/eval.js",
@@ -1592,7 +1613,7 @@
     "ignore": true
   },
   {
-    "__docId__": 104,
+    "__docId__": 105,
     "kind": "variable",
     "name": "fs",
     "memberof": "src/eval.js",
@@ -1613,7 +1634,7 @@
     "ignore": true
   },
   {
-    "__docId__": 105,
+    "__docId__": 106,
     "kind": "function",
     "name": "evaluate",
     "memberof": "src/eval.js",
@@ -1653,7 +1674,7 @@
     "ignore": true
   },
   {
-    "__docId__": 106,
+    "__docId__": 107,
     "kind": "function",
     "name": "program",
     "memberof": "src/eval.js",
@@ -1690,7 +1711,7 @@
     "ignore": true
   },
   {
-    "__docId__": 107,
+    "__docId__": 108,
     "kind": "function",
     "name": "list",
     "memberof": "src/eval.js",
@@ -1723,7 +1744,7 @@
     "ignore": true
   },
   {
-    "__docId__": 108,
+    "__docId__": 109,
     "kind": "variable",
     "name": "NS_PER_SEC",
     "memberof": "src/eval.js",
@@ -1744,7 +1765,7 @@
     "ignore": true
   },
   {
-    "__docId__": 109,
+    "__docId__": 110,
     "kind": "variable",
     "name": "US_PER_SEC",
     "memberof": "src/eval.js",
@@ -1765,7 +1786,7 @@
     "ignore": true
   },
   {
-    "__docId__": 110,
+    "__docId__": 111,
     "kind": "variable",
     "name": "MS_PER_SEC",
     "memberof": "src/eval.js",
@@ -1786,7 +1807,7 @@
     "ignore": true
   },
   {
-    "__docId__": 111,
+    "__docId__": 112,
     "kind": "function",
     "name": "pipeline",
     "memberof": "src/eval.js",
@@ -1819,7 +1840,7 @@
     "ignore": true
   },
   {
-    "__docId__": 112,
+    "__docId__": 113,
     "kind": "function",
     "name": "simple_cmd",
     "memberof": "src/eval.js",
@@ -1851,7 +1872,7 @@
     "ignore": true
   },
   {
-    "__docId__": 113,
+    "__docId__": 114,
     "kind": "function",
     "name": "group_cmd",
     "memberof": "src/eval.js",
@@ -1864,7 +1885,7 @@
     "importPath": "blush/src/eval.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 278,
+    "lineNumber": 279,
     "undocument": true,
     "params": [
       {
@@ -1888,7 +1909,40 @@
     "ignore": true
   },
   {
-    "__docId__": 114,
+    "__docId__": 115,
+    "kind": "function",
+    "name": "if_cmd",
+    "memberof": "src/eval.js",
+    "generator": false,
+    "async": true,
+    "static": true,
+    "longname": "src/eval.js~if_cmd",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/eval.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 285,
+    "undocument": true,
+    "params": [
+      {
+        "name": "node",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "ctx",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": null,
+    "ignore": true
+  },
+  {
+    "__docId__": 116,
     "kind": "function",
     "name": "redir_ofile",
     "memberof": "src/eval.js",
@@ -1901,7 +1955,7 @@
     "importPath": "blush/src/eval.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 283,
+    "lineNumber": 308,
     "undocument": true,
     "params": [
       {
@@ -1925,7 +1979,7 @@
     "ignore": true
   },
   {
-    "__docId__": 115,
+    "__docId__": 117,
     "kind": "function",
     "name": "assign",
     "memberof": "src/eval.js",
@@ -1938,7 +1992,7 @@
     "importPath": "blush/src/eval.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 289,
+    "lineNumber": 315,
     "undocument": true,
     "params": [
       {
@@ -1958,7 +2012,7 @@
     "ignore": true
   },
   {
-    "__docId__": 116,
+    "__docId__": 118,
     "kind": "function",
     "name": "AND",
     "memberof": "src/eval.js",
@@ -1971,7 +2025,7 @@
     "importPath": "blush/src/eval.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 300,
+    "lineNumber": 327,
     "undocument": true,
     "params": [
       {
@@ -1995,7 +2049,7 @@
     "ignore": true
   },
   {
-    "__docId__": 117,
+    "__docId__": 119,
     "kind": "function",
     "name": "OR",
     "memberof": "src/eval.js",
@@ -2008,7 +2062,7 @@
     "importPath": "blush/src/eval.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 305,
+    "lineNumber": 332,
     "undocument": true,
     "params": [
       {
@@ -2032,10 +2086,114 @@
     "ignore": true
   },
   {
-    "__docId__": 118,
+    "__docId__": 120,
+    "kind": "file",
+    "name": "src/exec.js",
+    "content": "const parse = require('./parse');\nconst {evaluate} = require('./eval');\nconst {PassThrough} = require('stream');\n\nmodule.exports = async function exec (cmd)\n{\n  const pipe_stdout = new PassThrough;\n  let out = '';\n  return await new Promise((res, rej) => {\n    pipe_stdout\n    .on('error', (err) => {\n      rej(err);\n    })\n    .on('data', (data) => {\n      out += data.toString();\n    })\n    .on('end', () => {\n      res(out)\n    });\n\n    try {\n      evaluate(parse(cmd+'\\n'), {pipe_stdout});\n    }\n    catch (err) {\n      rej(err);\n    }\n  });\n}\n",
+    "static": true,
+    "longname": "/mnt/fast/Projects/blush/src/exec.js",
+    "access": "public",
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 121,
+    "kind": "variable",
+    "name": "parse",
+    "memberof": "src/exec.js",
+    "static": true,
+    "longname": "src/exec.js~parse",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/exec.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 122,
+    "kind": "variable",
+    "name": "evaluate",
+    "memberof": "src/exec.js",
+    "static": true,
+    "longname": "src/exec.js~evaluate",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/exec.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 123,
+    "kind": "variable",
+    "name": "PassThrough",
+    "memberof": "src/exec.js",
+    "static": true,
+    "longname": "src/exec.js~PassThrough",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/exec.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 124,
+    "kind": "function",
+    "name": "exec",
+    "memberof": "src/exec.js",
+    "generator": false,
+    "async": true,
+    "static": true,
+    "longname": "src/exec.js~exec",
+    "access": "public",
+    "export": true,
+    "importPath": "blush/src/exec.js",
+    "importStyle": "exec",
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "params": [
+      {
+        "name": "cmd",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 125,
     "kind": "file",
     "name": "src/index.js",
-    "content": "#!/usr/bin/env node\n\nconst args = process.argv.slice(2);\n\n// TODO: Parse options.\n\nconst REPL = require('./repl');\nconst repl = new REPL();\nrepl.start();\n",
+    "content": "#!/usr/bin/env node\n\nconst parseExitCode = require('./utils/parse-exit-code');\nconst args = process.argv.slice(2);\n\n// TODO: Parse options.\n\nconst opts = {\n};\n\nconst files = [];\n\nfor (let arg of args) {\n  if (arg.charAt(0) == '-') {\n    // option\n  }\n  else {\n    // file\n    files.push(arg);\n  }\n}\n\n;(async () => {\n\n  if (files.length) {\n    let exitCode = 0;\n    const parse = require('./parse');\n    const {evaluate} = require('./eval');\n    for (let file of files) {\n      try {\n        await evaluate(parse.file(file));\n        exitCode = 0;\n      }\n      catch (err) {\n        console.error(err.message);\n        exitCode = err;\n      }\n    }\n    process.exit(parseExitCode(exitCode));\n  }\n  else {\n    const REPL = require('./repl');\n    const repl = new REPL();\n    try {\n      await repl.start();\n    }\n    catch (err) {\n      exitCode = err;\n    }\n  }\n})();\n",
     "static": true,
     "longname": "/mnt/fast/Projects/blush/src/index.js",
     "access": "public",
@@ -2043,12 +2201,12 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 119,
+    "__docId__": 126,
     "kind": "variable",
-    "name": "args",
+    "name": "parseExitCode",
     "memberof": "src/index.js",
     "static": true,
-    "longname": "src/index.js~args",
+    "longname": "src/index.js~parseExitCode",
     "access": "public",
     "export": false,
     "importPath": "blush/src/index.js",
@@ -2064,18 +2222,18 @@
     "ignore": true
   },
   {
-    "__docId__": 120,
+    "__docId__": 127,
     "kind": "variable",
-    "name": "REPL",
+    "name": "args",
     "memberof": "src/index.js",
     "static": true,
-    "longname": "src/index.js~REPL",
+    "longname": "src/index.js~args",
     "access": "public",
     "export": false,
     "importPath": "blush/src/index.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 7,
+    "lineNumber": 4,
     "undocument": true,
     "type": {
       "types": [
@@ -2085,12 +2243,12 @@
     "ignore": true
   },
   {
-    "__docId__": 121,
+    "__docId__": 128,
     "kind": "variable",
-    "name": "repl",
+    "name": "opts",
     "memberof": "src/index.js",
     "static": true,
-    "longname": "src/index.js~repl",
+    "longname": "src/index.js~opts",
     "access": "public",
     "export": false,
     "importPath": "blush/src/index.js",
@@ -2100,13 +2258,34 @@
     "undocument": true,
     "type": {
       "types": [
-        "*"
+        "{}"
       ]
     },
     "ignore": true
   },
   {
-    "__docId__": 122,
+    "__docId__": 129,
+    "kind": "variable",
+    "name": "files",
+    "memberof": "src/index.js",
+    "static": true,
+    "longname": "src/index.js~files",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 11,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*[]"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 130,
     "kind": "file",
     "name": "src/interp.js",
     "content": "exports.env = function env (str, map)\n{\n  while (/\\$\\w/.test(str)) {\n    str = str.replace(/\\$\\w+/, (match) => {\n      return (map[match.slice(1)] || '');\n    });\n  }\n  return str;\n}\n\nexports.args = function args (str, arr)\n{\n  return str.replace(/\\$\\d+/, (match) => {\n    return arr[Number(match.slice(1))] || '';\n  }).replace(/\\$@/, (match) => {\n    return arr.slice(1).join(' ');\n  });\n}\n\nexports.glob = function glob (str)\n{\n  const glob = require('glob');\n  return glob.hasMagic(str) ? glob.sync(str) : str;\n}\n",
@@ -2117,7 +2296,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 123,
+    "__docId__": 131,
     "kind": "function",
     "name": "env",
     "memberof": "src/interp.js",
@@ -2153,7 +2332,7 @@
     }
   },
   {
-    "__docId__": 124,
+    "__docId__": 132,
     "kind": "function",
     "name": "args",
     "memberof": "src/interp.js",
@@ -2189,7 +2368,7 @@
     }
   },
   {
-    "__docId__": 125,
+    "__docId__": 133,
     "kind": "function",
     "name": "glob",
     "memberof": "src/interp.js",
@@ -2219,7 +2398,7 @@
     }
   },
   {
-    "__docId__": 126,
+    "__docId__": 134,
     "kind": "file",
     "name": "src/unit.js",
     "content": "class Unit\n{\n  constructor ()\n  {}\n}\n\nclass Command extends Unit\n{\n  constructor ({\n    pipe_stdin = false,\n    pipe_stdout = false,\n    redir = [],\n    ...ctx,\n  })\n  {\n    super(ctx);\n    this.pipe_stdin = pipe_stdin;\n    this.pipe_stdout = pipe_stdout;\n    this.redir = redir;\n  }\n}\n\nclass SimpleCommand extends Command\n{\n  constructor ({\n    name,\n    args = [],\n    params = {},\n    ...ctx,\n  })\n  {\n    super(ctx);\n    this.name = name;\n    this.args = args;\n    this.params = params;\n  }\n}\n\nclass GroupCommand extends GroupCommand\n{\n  constructor ({\n    commands = [],\n    ...ctx\n  })\n  {\n    super(ctx);\n    this.commands = commands;\n  }\n}\n\nclass Pipeline extends Unit\n{\n  constructor ({\n    commands = [],\n    ...ctx,\n  })\n  {\n    super(ctx);\n    this.commands = commands;\n  }\n}\n",
@@ -2230,7 +2409,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 127,
+    "__docId__": 135,
     "kind": "class",
     "name": "Unit",
     "memberof": "src/unit.js",
@@ -2247,7 +2426,7 @@
     "ignore": true
   },
   {
-    "__docId__": 128,
+    "__docId__": 136,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/unit.js~Unit",
@@ -2261,7 +2440,7 @@
     "undocument": true
   },
   {
-    "__docId__": 129,
+    "__docId__": 137,
     "kind": "class",
     "name": "Command",
     "memberof": "src/unit.js",
@@ -2281,7 +2460,7 @@
     "ignore": true
   },
   {
-    "__docId__": 130,
+    "__docId__": 138,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/unit.js~Command",
@@ -2295,7 +2474,7 @@
     "undocument": true
   },
   {
-    "__docId__": 131,
+    "__docId__": 139,
     "kind": "member",
     "name": "pipe_stdin",
     "memberof": "src/unit.js~Command",
@@ -2312,7 +2491,7 @@
     }
   },
   {
-    "__docId__": 132,
+    "__docId__": 140,
     "kind": "member",
     "name": "pipe_stdout",
     "memberof": "src/unit.js~Command",
@@ -2329,7 +2508,7 @@
     }
   },
   {
-    "__docId__": 133,
+    "__docId__": 141,
     "kind": "member",
     "name": "redir",
     "memberof": "src/unit.js~Command",
@@ -2346,7 +2525,7 @@
     }
   },
   {
-    "__docId__": 134,
+    "__docId__": 142,
     "kind": "class",
     "name": "SimpleCommand",
     "memberof": "src/unit.js",
@@ -2366,7 +2545,7 @@
     "ignore": true
   },
   {
-    "__docId__": 135,
+    "__docId__": 143,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/unit.js~SimpleCommand",
@@ -2380,7 +2559,7 @@
     "undocument": true
   },
   {
-    "__docId__": 136,
+    "__docId__": 144,
     "kind": "member",
     "name": "name",
     "memberof": "src/unit.js~SimpleCommand",
@@ -2397,7 +2576,7 @@
     }
   },
   {
-    "__docId__": 137,
+    "__docId__": 145,
     "kind": "member",
     "name": "args",
     "memberof": "src/unit.js~SimpleCommand",
@@ -2414,7 +2593,7 @@
     }
   },
   {
-    "__docId__": 138,
+    "__docId__": 146,
     "kind": "member",
     "name": "params",
     "memberof": "src/unit.js~SimpleCommand",
@@ -2431,7 +2610,7 @@
     }
   },
   {
-    "__docId__": 139,
+    "__docId__": 147,
     "kind": "class",
     "name": "GroupCommand",
     "memberof": "src/unit.js",
@@ -2451,7 +2630,7 @@
     "ignore": true
   },
   {
-    "__docId__": 140,
+    "__docId__": 148,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/unit.js~GroupCommand",
@@ -2465,7 +2644,7 @@
     "undocument": true
   },
   {
-    "__docId__": 141,
+    "__docId__": 149,
     "kind": "member",
     "name": "commands",
     "memberof": "src/unit.js~GroupCommand",
@@ -2482,7 +2661,7 @@
     }
   },
   {
-    "__docId__": 142,
+    "__docId__": 150,
     "kind": "class",
     "name": "Pipeline",
     "memberof": "src/unit.js",
@@ -2502,7 +2681,7 @@
     "ignore": true
   },
   {
-    "__docId__": 143,
+    "__docId__": 151,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/unit.js~Pipeline",
@@ -2516,7 +2695,7 @@
     "undocument": true
   },
   {
-    "__docId__": 144,
+    "__docId__": 152,
     "kind": "member",
     "name": "commands",
     "memberof": "src/unit.js~Pipeline",
@@ -2533,10 +2712,71 @@
     }
   },
   {
-    "__docId__": 145,
+    "__docId__": 153,
+    "kind": "file",
+    "name": "src/utils/error.js",
+    "content": "module.exports = class BlushError extends Error\n{\n  constructor (message, errno)\n  {\n    super(message);\n    this.errno = errno;\n  }\n}\n",
+    "static": true,
+    "longname": "/mnt/fast/Projects/blush/src/utils/error.js",
+    "access": "public",
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 154,
+    "kind": "class",
+    "name": "BlushError",
+    "memberof": "src/utils/error.js",
+    "static": true,
+    "longname": "src/utils/error.js~BlushError",
+    "access": "public",
+    "export": true,
+    "importPath": "blush/src/utils/error.js",
+    "importStyle": "BlushError",
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "interface": false,
+    "extends": [
+      "Error"
+    ]
+  },
+  {
+    "__docId__": 155,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/utils/error.js~BlushError",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/utils/error.js~BlushError#constructor",
+    "access": "public",
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true
+  },
+  {
+    "__docId__": 156,
+    "kind": "member",
+    "name": "errno",
+    "memberof": "src/utils/error.js~BlushError",
+    "static": false,
+    "longname": "src/utils/error.js~BlushError#errno",
+    "access": "public",
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 157,
     "kind": "file",
     "name": "src/utils/locate-command.js",
-    "content": "const glob = require('glob');\nconst path = require('path');\n\nmodule.exports = function locateCommand (name)\n{\n  const paths = process.env.PATH.split(path.delimiter);\n  const pattern = '{'+paths.map((p) => path.join(p, name)).join(',')+'}';\n  const result = glob.sync(pattern);\n  return result[0];\n}\n",
+    "content": "const BlushError = require('./error.js');\nconst glob = require('glob');\nconst path = require('path');\nconst log = require('./debug')('blush:locate-command');\nconst fs = require('fs');\n\nmodule.exports = function locateCommand (name, local)\n{\n  let pattern;\n  let isFile = local;\n  if (local) {\n    pattern = path.resolve(process.cwd(), name);\n  }\n  else if (name.charAt(0) === '/') {\n    isFile = true;\n    pattern = name;\n  }\n  else {\n    paths = process.env.PATH.split(path.delimiter);\n    pattern = '{'+paths.map((p) => path.resolve(p, name)).join(',')+'}';\n  }\n\n  const result = glob.sync(pattern)[0];\n\n  if (result) {\n    const stats = fs.statSync(result);\n\n    if (stats.isFile()) {\n\n      try { fs.accessSync(result, fs.constants.X_OK) }\n      catch (err) {\n        throw new BlushError(`${name}: Permission denied`, 126);\n      }\n\n      return result;\n    }\n\n    if (stats.isDirectory()) {\n      throw new BlushError(`${name}: Is a directory`, 126)\n    }\n  }\n\n  if (isFile) {\n    throw new BlushError(`${name}: No such file or directory`, 127)\n  }\n\n  throw new BlushError(`${name}: command not found`, 127)\n}\n",
     "static": true,
     "longname": "/mnt/fast/Projects/blush/src/utils/locate-command.js",
     "access": "public",
@@ -2544,12 +2784,12 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 146,
+    "__docId__": 158,
     "kind": "variable",
-    "name": "glob",
+    "name": "BlushError",
     "memberof": "src/utils/locate-command.js",
     "static": true,
-    "longname": "src/utils/locate-command.js~glob",
+    "longname": "src/utils/locate-command.js~BlushError",
     "access": "public",
     "export": false,
     "importPath": "blush/src/utils/locate-command.js",
@@ -2565,12 +2805,12 @@
     "ignore": true
   },
   {
-    "__docId__": 147,
+    "__docId__": 159,
     "kind": "variable",
-    "name": "path",
+    "name": "glob",
     "memberof": "src/utils/locate-command.js",
     "static": true,
-    "longname": "src/utils/locate-command.js~path",
+    "longname": "src/utils/locate-command.js~glob",
     "access": "public",
     "export": false,
     "importPath": "blush/src/utils/locate-command.js",
@@ -2586,7 +2826,70 @@
     "ignore": true
   },
   {
-    "__docId__": 148,
+    "__docId__": 160,
+    "kind": "variable",
+    "name": "path",
+    "memberof": "src/utils/locate-command.js",
+    "static": true,
+    "longname": "src/utils/locate-command.js~path",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/utils/locate-command.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 161,
+    "kind": "variable",
+    "name": "log",
+    "memberof": "src/utils/locate-command.js",
+    "static": true,
+    "longname": "src/utils/locate-command.js~log",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/utils/locate-command.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 4,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 162,
+    "kind": "variable",
+    "name": "fs",
+    "memberof": "src/utils/locate-command.js",
+    "static": true,
+    "longname": "src/utils/locate-command.js~fs",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/utils/locate-command.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 163,
     "kind": "function",
     "name": "locateCommand",
     "memberof": "src/utils/locate-command.js",
@@ -2599,11 +2902,17 @@
     "importPath": "blush/src/utils/locate-command.js",
     "importStyle": "locateCommand",
     "description": null,
-    "lineNumber": 4,
+    "lineNumber": 7,
     "undocument": true,
     "params": [
       {
         "name": "name",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "local",
         "types": [
           "*"
         ]
@@ -2616,7 +2925,7 @@
     }
   },
   {
-    "__docId__": 149,
+    "__docId__": 164,
     "kind": "file",
     "name": "src/utils/parse-exit-code.js",
     "content": "const os = require('os');\n\nmodule.exports = function parseExitCode (err)\n{\n  if (!isNaN(err)) {\n    return err;\n  }\n  else if (typeof err === 'string') {\n    const code = os.constants.signals[err] + 128;\n    return code;\n  }\n  else if (err.errno) {\n    let code = err.errno;\n    if (typeof code === 'string') {\n      code = os.constants.errno[code];\n    }\n    return code;\n  }\n  return -1;\n}\n",
@@ -2627,7 +2936,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 150,
+    "__docId__": 165,
     "kind": "variable",
     "name": "os",
     "memberof": "src/utils/parse-exit-code.js",
@@ -2648,7 +2957,7 @@
     "ignore": true
   },
   {
-    "__docId__": 151,
+    "__docId__": 166,
     "kind": "function",
     "name": "parseExitCode",
     "memberof": "src/utils/parse-exit-code.js",
@@ -2678,10 +2987,10 @@
     }
   },
   {
-    "__docId__": 152,
+    "__docId__": 167,
     "kind": "file",
     "name": "src/word.js",
-    "content": "const log = require('debug')('blush:word');\nconst os = require('os');\n\nconst $ = exports;\n\n$.evaluate = function evaluate (word)\n{\n  const type = word.type.toLowerCase();\n  if (!(type in $)) {\n    return log('node type \\'%s\\' not implemented', node.type);\n  }\n  return $.expand($[type](word));\n}\n\n$.word = function word (word)\n{\n  return word.value;\n}\n\n$.dstr =\n$.sstr =\n$.estr = function string (word)\n{\n  return word.value;\n}\n\n$.loose_word = function loose_word (word)\n{\n  return word.parts.reduce((a, w) => a += $.evaluate(w), '');\n}\n\n$.expand = function (str)\n{\n  str = $.expand_tilde(str);\n  str = $.expand_env(str);\n  return str;\n}\n\n$.expand_env = function (str)\n{\n  return str.replace(/\\$[a-zA-Z_][a-zA-Z0-9_]*/g, (match) => {\n    const name = match.slice(1);\n    return process.env[name] || '';\n  });\n}\n\n$.expand_tilde = function (str)\n{\n  return str.replace(/^~/, os.homedir());\n}\n",
+    "content": "const log = require('./utils/debug')('blush:word');\nconst os = require('os');\n\nconst $ = exports;\n\n$.evaluate = function evaluate (word)\n{\n  const type = word.type.toLowerCase();\n  if (!(type in $)) {\n    return log('node type \\'%s\\' not implemented', node.type);\n  }\n  return $.expand($[type](word));\n}\n\n$.word = function word (word)\n{\n  return word.value;\n}\n\n$.dstr =\n$.sstr =\n$.estr = function string (word)\n{\n  return word.value;\n}\n\n$.loose_word = function loose_word (word)\n{\n  return word.parts.reduce((a, w) => a += $.evaluate(w), '');\n}\n\n$.expand = function (str)\n{\n  str = $.expand_tilde(str);\n  str = $.expand_env(str);\n  return str;\n}\n\n$.expand_env = function (str)\n{\n  return str.replace(/\\$[a-zA-Z_][a-zA-Z0-9_]*/g, (match) => {\n    const name = match.slice(1);\n    return process.env[name] || '';\n  });\n}\n\n$.expand_tilde = function (str)\n{\n  return str.replace(/^~/, os.homedir());\n}\n",
     "static": true,
     "longname": "/mnt/fast/Projects/blush/src/word.js",
     "access": "public",
@@ -2689,7 +2998,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 153,
+    "__docId__": 168,
     "kind": "variable",
     "name": "log",
     "memberof": "src/word.js",
@@ -2710,7 +3019,7 @@
     "ignore": true
   },
   {
-    "__docId__": 154,
+    "__docId__": 169,
     "kind": "variable",
     "name": "os",
     "memberof": "src/word.js",
@@ -2731,7 +3040,7 @@
     "ignore": true
   },
   {
-    "__docId__": 155,
+    "__docId__": 170,
     "kind": "variable",
     "name": "$",
     "memberof": "src/word.js",
@@ -2752,7 +3061,7 @@
     "ignore": true
   },
   {
-    "__docId__": 156,
+    "__docId__": 171,
     "kind": "function",
     "name": "evaluate",
     "memberof": "src/word.js",
@@ -2783,7 +3092,7 @@
     "ignore": true
   },
   {
-    "__docId__": 157,
+    "__docId__": 172,
     "kind": "function",
     "name": "word",
     "memberof": "src/word.js",
@@ -2814,7 +3123,7 @@
     "ignore": true
   },
   {
-    "__docId__": 158,
+    "__docId__": 173,
     "kind": "function",
     "name": "loose_word",
     "memberof": "src/word.js",
@@ -2845,7 +3154,7 @@
     "ignore": true
   },
   {
-    "__docId__": 159,
+    "__docId__": 174,
     "kind": "function",
     "name": "expand",
     "memberof": "src/word.js",
@@ -2876,7 +3185,7 @@
     "ignore": true
   },
   {
-    "__docId__": 160,
+    "__docId__": 175,
     "kind": "function",
     "name": "expand_env",
     "memberof": "src/word.js",
@@ -2907,7 +3216,7 @@
     "ignore": true
   },
   {
-    "__docId__": 161,
+    "__docId__": 176,
     "kind": "function",
     "name": "expand_tilde",
     "memberof": "src/word.js",
