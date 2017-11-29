@@ -4,11 +4,11 @@ const parseExitCode = require('../utils/parse-exit-code');
 
 module.exports = class Source extends Builtin
 {
-  constructor (name, args, opts)
+  constructor (name, args, opts, state)
   {
-    super(name, args, opts);
+    super(name, args, opts, state);
 
-    const {evaluate} = require('../eval');
+    const {run} = require('../run');
 
     let exitCode = 0;
 
@@ -18,7 +18,7 @@ module.exports = class Source extends Builtin
     }
     else {
       let ast = parse.file(args[0]);
-      evaluate(ast)
+      run(ast, state)
       .then(() => {
         process.nextTick(() => this.emit('exit', 0));
       }, (err) => {

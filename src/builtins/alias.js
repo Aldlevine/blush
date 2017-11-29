@@ -4,9 +4,9 @@ const aliases = {};
 
 exports.alias = class Alias extends Builtin
 {
-  constructor (name, args, opts)
+  constructor (name, args, opts, state)
   {
-    super(name, args, opts);
+    super(name, args, opts, state);
     let exitCode = 0;
 
     if (args.length == 0) {

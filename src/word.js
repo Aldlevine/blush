@@ -3,48 +3,85 @@ const os = require('os');
 
 const $ = exports;
 
-$.evaluate = function evaluate (word)
+$.evaluate = async function evaluate (word, state, ctx)
 {
-  const type = word.type.toLowerCase();
+  const type = word.type && word.type.toLowerCase();
   if (!(type in $)) {
-    return log('node type \'%s\' not implemented', node.type);
+    return log('node type \'%s\' not implemented', word.type);
   }
-  return $.expand($[type](word));
+  return await $[type](word, state, ctx);
 }
 
-$.word = function word (word)
+$.word = async function word (word, state, ctx)
 {
-  return word.value;
+  return $.expand(word.value, state, ctx);
 }
 
-$.dstr =
+$.dstr = async function string (word, state, ctx)
+{
+  let out = '';
+  for (let part of word.parts) {
+    out += await $.evaluate(part, state, ctx);
+  }
+  return await $.expand_env(out, state, ctx);
+}
+
+$.dstr_string =
 $.sstr =
-$.estr = function string (word)
+$.estr = async function string (word, state, ctx)
 {
   return word.value;
 }
 
-$.loose_word = function loose_word (word)
+$.loose_word = async function loose_word (word, state, ctx)
 {
-  return word.parts.reduce((a, w) => a += $.evaluate(w), '');
+  let out = '';
+  for (let part of word.parts) {
+    out += await $.evaluate(part, state, ctx);
+  }
+  return out;
+  // return word.parts.reduce(async (a, w) => a += await $.evaluate(w), '');
 }
 
-$.expand = function (str)
+$.dstr_sub_word = async function dstr_sub_word (word, state, ctx)
 {
-  str = $.expand_tilde(str);
-  str = $.expand_env(str);
+  const exec = require('./exec');
+  state.save();
+  let out = await exec(word.list, state, ctx);
+  state.restore();
+  return out.replace(/\s+$/, '');
+}
+
+$.sub_word = async function sub_word (word, state, ctx)
+{
+  const exec = require('./exec');
+  state.save();
+  let out = await exec(word.list, state, ctx);
+  state.restore();
+  return out.replace(/\s+$/, '').replace(/\s+/g, ' ');
+}
+
+$.expand = async function (str, state, ctx)
+{
+  str = await $.expand_tilde(str, state, ctx);
+  str = await $.expand_env(str, state, ctx);
   return str;
 }
 
-$.expand_env = function (str)
+$.expand_env = async function (str, state, ctx)
 {
-  return str.replace(/\$[a-zA-Z_][a-zA-Z0-9_]*/g, (match) => {
+  return str
+  .replace(/\$[a-zA-Z_][a-zA-Z0-9_]*/g, (match) => {
     const name = match.slice(1);
+    return process.env[name] || '';
+  })
+  .replace(/\$\{[a-zA-Z_][a-zA-Z0-9_]*\}/g, (match) => {
+    const name = match.slice(2, -1);
     return process.env[name] || '';
   });
 }
 
-$.expand_tilde = function (str)
+$.expand_tilde = async function (str, state, ctx)
 {
   return str.replace(/^~/, os.homedir());
 }

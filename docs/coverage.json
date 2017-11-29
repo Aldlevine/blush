@@ -1,7 +1,7 @@
 {
-  "coverage": "0.88%",
-  "expectCount": 113,
-  "actualCount": 1,
+  "coverage": "1.49%",
+  "expectCount": 134,
+  "actualCount": 2,
   "files": {
     "src/builtins/alias.js": {
       "expectCount": 9,
@@ -44,6 +44,16 @@
         6
       ]
     },
+    "src/builtins/eval.js": {
+      "expectCount": 4,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        4,
+        6
+      ]
+    },
     "src/builtins/exit.js": {
       "expectCount": 3,
       "actualCount": 0,
@@ -53,15 +63,14 @@
         5
       ]
     },
-    "src/builtins/index.js": {
-      "expectCount": 5,
+    "src/builtins/export.js": {
+      "expectCount": 4,
       "actualCount": 0,
       "undocumentLines": [
         1,
         2,
         4,
-        8,
-        9
+        6
       ]
     },
     "src/builtins/source.js": {
@@ -115,13 +124,14 @@
       ]
     },
     "src/exec.js": {
-      "expectCount": 4,
+      "expectCount": 5,
       "actualCount": 0,
       "undocumentLines": [
         1,
         2,
         3,
-        5
+        4,
+        6
       ]
     },
     "src/index.js": {
@@ -134,37 +144,50 @@
         11
       ]
     },
-    "src/interp.js": {
-      "expectCount": 3,
-      "actualCount": 0,
+    "src/run.js": {
+      "expectCount": 27,
+      "actualCount": 1,
       "undocumentLines": [
         1,
-        11,
-        20
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12,
+        26,
+        42,
+        49,
+        103,
+        104,
+        105,
+        107,
+        330,
+        336,
+        360,
+        368,
+        375,
+        381,
+        394,
+        399
       ]
     },
-    "src/unit.js": {
-      "expectCount": 18,
+    "src/state.js": {
+      "expectCount": 8,
       "actualCount": 0,
       "undocumentLines": [
         1,
         3,
-        7,
-        9,
-        17,
-        18,
-        19,
-        23,
-        25,
-        33,
-        34,
-        35,
-        39,
-        41,
-        47,
-        51,
-        53,
-        59
+        5,
+        10,
+        11,
+        13,
+        16,
+        25
       ]
     },
     "src/utils/error.js": {
@@ -197,7 +220,7 @@
       ]
     },
     "src/word.js": {
-      "expectCount": 9,
+      "expectCount": 12,
       "actualCount": 0,
       "undocumentLines": [
         1,
@@ -205,10 +228,13 @@
         4,
         6,
         15,
-        27,
-        32,
-        39,
-        47
+        20,
+        36,
+        46,
+        55,
+        64,
+        71,
+        84
       ]
     }
   }

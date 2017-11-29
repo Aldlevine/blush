@@ -87,8 +87,9 @@
       LESSGREAT: '<>',
       GREAT: '>',
       BANG: '!',
-      LPAREN: '(',
-      RPAREN: ')',
+      SUBSTITUTE: {match: '$(', push: 'main'},
+      LPAREN: {match: '(', push: 'main'},
+      RPAREN: {match: ')', pop: true},
       LBRACE: '{',
       RBRACE: '}',
       LMATH: '[[',
@@ -128,6 +129,7 @@
       SQUO: { match: `'`, pop: true }
     },
     dstring: {
+      SUBSTITUTE: { match: '$(', push: 'main' },
       DSTR: { match: /(?:(?:\\")|[^"\n])+/, value: unescape },
       DQUO: { match: `"`, pop: true }
     },
@@ -207,7 +209,11 @@ pipeline     -> (%TIME __):? (%BANG __):? command (_ pipe_sep empty command):*
                       raw[i-1].pipe_stdout = true;
                       raw[i+1].pipe_stdin = true;
                       if (token.value.type === 'PIPEAND') {
-                        raw[i-1].redir[2] = 1;
+                        raw[i-1].redir[2] = {
+                          type: 'redir_fd',
+                          io: 2,
+                          to: 1
+                        };
                       }
                     }
                     else {
@@ -312,21 +318,22 @@ subshell_cmd -> %LPAREN empty list_body (_ list_term):? _ %RPAREN
                 {% ([,,list,list_term,,]) => {
                   list = one(list);
                   list.commands.push(one(list_term));
+                  list.commands = merge(...list.commands);
                   return {
                     type: 'subshell_cmd',
                     list,
                   }
                 } %}
 
-assign         -> %ASSIGN (word):*
-                  {% ([assign, word]) => {
-                    const name = one(assign).value.slice(0, -1);
-                    return {
-                      type: 'assign',
-                      name,
-                      value: one(word),
-                    }
-                  } %}
+assign       -> %ASSIGN (word):?
+                {% ([assign, word]) => {
+                  const name = one(assign).value.slice(0, -1);
+                  return {
+                    type: 'assign',
+                    name,
+                    value: one(word),
+                  }
+                } %}
 
 loose_word   -> (strict_word | keyword_word | op_word | assign_word ):+
                 {% (words) => {
@@ -345,13 +352,48 @@ word         -> (%NAME | %WORD)
                 {% (word) => combine('word', merge(...word)) %}
              |  word op_word word
                 {% (word) => combine('word', merge(...word)) %}
+             |  sub_word
+                {% one %}
 
-string       -> %DQUO (%DSTR):? %DQUO
-                {% (str) => string('dstr', ...str) %}
+sub_word     -> %SUBSTITUTE empty list_body (_ list_term):? _ %RPAREN
+                {% ([,,list,list_term,,]) => {
+                  list = one(list);
+                  list.commands.push(one(list_term));
+                  list.commands = merge(...list.commands);
+                  return {
+                    type: 'sub_word',
+                    list,
+                  }
+                } %}
+
+# string       -> %DQUO (%DSTR):? %DQUO
+#                 {% (str) => string('dstr', ...str) %}
+string       -> dstr
              |  %SQUO (%SSTR):? %SQUO
                 {% (str) => string('sstr', ...str) %}
              |  %EQUO (%ESTR):? %SQUO
                 {% (str) => string('estr', ...str) %}
+
+dstr         -> %DQUO (sub_word | %DSTR):* %DQUO
+                {% (str) => {
+                  str = flatten(str);
+                  let parts = [];
+                  for (let part of str) {
+                    part = one(part);
+                    if (part.type == 'DSTR') {
+                      part.type = 'dstr_string';
+                      parts.push(part);
+                    }
+                    if (part.type == 'sub_word') {
+                      part.type = 'dstr_sub_word';
+                      parts.push(part);
+                    }
+                  }
+                  return {
+                    type: 'dstr',
+                    parts
+                  }
+                } %}
 
 keyword_word -> keyword
                 {% (word) => combine('word', merge(word)) %}

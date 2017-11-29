@@ -25,16 +25,16 @@ for (let arg of args) {
   if (files.length) {
     let exitCode = 0;
     const parse = require('./parse');
-    const {evaluate} = require('./eval');
+    const {run} = require('./run');
     for (let file of files) {
-      try {
-        await evaluate(parse.file(file));
+      // try {
+        await run(parse.file(file));
         exitCode = 0;
-      }
-      catch (err) {
-        console.error(err.message);
-        exitCode = err;
-      }
+      // }
+      // catch (err) {
+      //   print.err(err);
+      //   exitCode = err;
+      // }
     }
     process.exit(parseExitCode(exitCode));
   }

@@ -5,9 +5,9 @@ const path = require('path');
 
 module.exports = class Which extends Builtin
 {
-  constructor (name, args, opts)
+  constructor (name, args, opts, state)
   {
-    super(name, args, opts);
+    super(name, args, opts, state);
     const builtins = require('./index');
     const cmdopts = {
       all: false,

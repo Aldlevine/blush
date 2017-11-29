@@ -3,7 +3,7 @@ const {PassThrough} = require('stream');
 
 module.exports = class Builtin extends EventEmitter
 {
-  constructor (name, args, opts)
+  constructor (name, args, opts, state)
   {
     super();
     Object.assign(this, {

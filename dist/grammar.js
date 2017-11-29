@@ -91,8 +91,9 @@ function id(x) {return x[0]; }
       LESSGREAT: '<>',
       GREAT: '>',
       BANG: '!',
-      LPAREN: '(',
-      RPAREN: ')',
+      SUBSTITUTE: {match: '$(', push: 'main'},
+      LPAREN: {match: '(', push: 'main'},
+      RPAREN: {match: ')', pop: true},
       LBRACE: '{',
       RBRACE: '}',
       LMATH: '[[',
@@ -132,6 +133,7 @@ function id(x) {return x[0]; }
       SQUO: { match: `'`, pop: true }
     },
     dstring: {
+      SUBSTITUTE: { match: '$(', push: 'main' },
       DSTR: { match: /(?:(?:\\")|[^"\n])+/, value: unescape },
       DQUO: { match: `"`, pop: true }
     },
@@ -218,7 +220,11 @@ var grammar = {
               raw[i-1].pipe_stdout = true;
               raw[i+1].pipe_stdin = true;
               if (token.value.type === 'PIPEAND') {
-                raw[i-1].redir[2] = 1;
+                raw[i-1].redir[2] = {
+                  type: 'redir_fd',
+                  io: 2,
+                  to: 1
+                };
               }
             }
             else {
@@ -337,14 +343,15 @@ var grammar = {
     {"name": "subshell_cmd", "symbols": [(lexer.has("LPAREN") ? {type: "LPAREN"} : LPAREN), "empty", "list_body", "subshell_cmd$ebnf$1", "_", (lexer.has("RPAREN") ? {type: "RPAREN"} : RPAREN)], "postprocess":  ([,,list,list_term,,]) => {
           list = one(list);
           list.commands.push(one(list_term));
+          list.commands = merge(...list.commands);
           return {
             type: 'subshell_cmd',
             list,
           }
         } },
-    {"name": "assign$ebnf$1", "symbols": []},
     {"name": "assign$ebnf$1$subexpression$1", "symbols": ["word"]},
-    {"name": "assign$ebnf$1", "symbols": ["assign$ebnf$1", "assign$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "assign$ebnf$1", "symbols": ["assign$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "assign$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "assign", "symbols": [(lexer.has("ASSIGN") ? {type: "ASSIGN"} : ASSIGN), "assign$ebnf$1"], "postprocess":  ([assign, word]) => {
           const name = one(assign).value.slice(0, -1);
           return {
@@ -377,18 +384,51 @@ var grammar = {
     {"name": "word", "symbols": ["string"], "postprocess": id},
     {"name": "word", "symbols": ["keyword_word", "word"], "postprocess": (word) => combine('word', merge(...word))},
     {"name": "word", "symbols": ["word", "op_word", "word"], "postprocess": (word) => combine('word', merge(...word))},
-    {"name": "string$ebnf$1$subexpression$1", "symbols": [(lexer.has("DSTR") ? {type: "DSTR"} : DSTR)]},
+    {"name": "word", "symbols": ["sub_word"], "postprocess": one},
+    {"name": "sub_word$ebnf$1$subexpression$1", "symbols": ["_", "list_term"]},
+    {"name": "sub_word$ebnf$1", "symbols": ["sub_word$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "sub_word$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "sub_word", "symbols": [(lexer.has("SUBSTITUTE") ? {type: "SUBSTITUTE"} : SUBSTITUTE), "empty", "list_body", "sub_word$ebnf$1", "_", (lexer.has("RPAREN") ? {type: "RPAREN"} : RPAREN)], "postprocess":  ([,,list,list_term,,]) => {
+          list = one(list);
+          list.commands.push(one(list_term));
+          list.commands = merge(...list.commands);
+          return {
+            type: 'sub_word',
+            list,
+          }
+        } },
+    {"name": "string", "symbols": ["dstr"]},
+    {"name": "string$ebnf$1$subexpression$1", "symbols": [(lexer.has("SSTR") ? {type: "SSTR"} : SSTR)]},
     {"name": "string$ebnf$1", "symbols": ["string$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "string$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "string", "symbols": [(lexer.has("DQUO") ? {type: "DQUO"} : DQUO), "string$ebnf$1", (lexer.has("DQUO") ? {type: "DQUO"} : DQUO)], "postprocess": (str) => string('dstr', ...str)},
-    {"name": "string$ebnf$2$subexpression$1", "symbols": [(lexer.has("SSTR") ? {type: "SSTR"} : SSTR)]},
+    {"name": "string", "symbols": [(lexer.has("SQUO") ? {type: "SQUO"} : SQUO), "string$ebnf$1", (lexer.has("SQUO") ? {type: "SQUO"} : SQUO)], "postprocess": (str) => string('sstr', ...str)},
+    {"name": "string$ebnf$2$subexpression$1", "symbols": [(lexer.has("ESTR") ? {type: "ESTR"} : ESTR)]},
     {"name": "string$ebnf$2", "symbols": ["string$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "string$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "string", "symbols": [(lexer.has("SQUO") ? {type: "SQUO"} : SQUO), "string$ebnf$2", (lexer.has("SQUO") ? {type: "SQUO"} : SQUO)], "postprocess": (str) => string('sstr', ...str)},
-    {"name": "string$ebnf$3$subexpression$1", "symbols": [(lexer.has("ESTR") ? {type: "ESTR"} : ESTR)]},
-    {"name": "string$ebnf$3", "symbols": ["string$ebnf$3$subexpression$1"], "postprocess": id},
-    {"name": "string$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "string", "symbols": [(lexer.has("EQUO") ? {type: "EQUO"} : EQUO), "string$ebnf$3", (lexer.has("SQUO") ? {type: "SQUO"} : SQUO)], "postprocess": (str) => string('estr', ...str)},
+    {"name": "string", "symbols": [(lexer.has("EQUO") ? {type: "EQUO"} : EQUO), "string$ebnf$2", (lexer.has("SQUO") ? {type: "SQUO"} : SQUO)], "postprocess": (str) => string('estr', ...str)},
+    {"name": "dstr$ebnf$1", "symbols": []},
+    {"name": "dstr$ebnf$1$subexpression$1", "symbols": ["sub_word"]},
+    {"name": "dstr$ebnf$1$subexpression$1", "symbols": [(lexer.has("DSTR") ? {type: "DSTR"} : DSTR)]},
+    {"name": "dstr$ebnf$1", "symbols": ["dstr$ebnf$1", "dstr$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "dstr", "symbols": [(lexer.has("DQUO") ? {type: "DQUO"} : DQUO), "dstr$ebnf$1", (lexer.has("DQUO") ? {type: "DQUO"} : DQUO)], "postprocess":  (str) => {
+          str = flatten(str);
+          let parts = [];
+          for (let part of str) {
+            part = one(part);
+            if (part.type == 'DSTR') {
+              part.type = 'dstr_string';
+              parts.push(part);
+            }
+            if (part.type == 'sub_word') {
+              part.type = 'dstr_sub_word';
+              parts.push(part);
+            }
+          }
+          return {
+            type: 'dstr',
+            parts
+          }
+        } },
     {"name": "keyword_word", "symbols": ["keyword"], "postprocess": (word) => combine('word', merge(word))},
     {"name": "op_word$subexpression$1", "symbols": [(lexer.has("LBRACE") ? {type: "LBRACE"} : LBRACE)]},
     {"name": "op_word$subexpression$1", "symbols": [(lexer.has("RBRACE") ? {type: "RBRACE"} : RBRACE)]},

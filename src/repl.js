@@ -1,7 +1,9 @@
+const parseExitCode = require('./utils/parse-exit-code');
+const print = require('./utils/print');
+const State = require('./state');
 const exec = require('./exec');
 const parse = require('./parse');
-const parseExitCode = require('./utils/parse-exit-code');
-const {evaluate} = require('./eval');
+const {run} = require('./run');
 const glob = require('glob');
 const readline = require('readline')
 const path = require('path');
@@ -16,6 +18,7 @@ const REPL = module.exports = class REPL
     this.history = [];
     this.status = 0;
     this.rl = null;
+    this.state = new State();
 
     process.on('SIGINT', () => {});
 
@@ -37,23 +40,22 @@ const REPL = module.exports = class REPL
 
   async renderPrompt ()
   {
-
-    let cwd = (await exec('pwd -L || cd'))
+    let cwd = (await exec('pwd -L || cd', this.state))
     .replace(/\n/g, '')
     .replace(RegExp('^'+os.homedir()), '~')
+    .replace(/(\/|\\)([^\/\\]+)$/g, chalk`{dim.bgHex('#555')   }{white.bold.bgHex('#555')  $2 }`)
     .replace(/(?!^)(\/|\\)/g, chalk`{dim.bgHex('#555')   }`)
     .replace(/^\//, chalk`{bgHex('#555') / }{dim.bgHex('#555')  }`);
 
-    // let branch = (await exec('git rev-parse --abbrev-ref HEAD || echo'))
-    // .replace(/\n/g, '');
-    let branch = '';
-    if (branch.length) branch = ' @ '+branch;
+    let branch = (await exec('git rev-parse --abbrev-ref HEAD |& cat || echo'))
+    .replace(/\n/g, '')
+    .replace(/^fatal:.+$/, '');
 
-    let name = chalk`{bold.white.bgHex('#169')  blush }{hex('#169').bgHex('#555') }`;
+    let name = chalk`{bold.white.bgHex('#169')  ${branch || 'blush'} }{hex('#169').bgHex('#555') }`;
 
     return this.status == 0
-    ? chalk`{bold.hex('#160').bgHex('#be0')  0 }{hex('#be0').bgHex('#169') }${name}{bgHex('#555')  ${cwd} ${branch}}{hex('#555') } `
-    : chalk`{bold.white.bgHex('#700')  ${this.status} }{hex('#700').bgHex('#169') }${name}{bgHex('#555')  ${cwd} ${branch}}{hex('#555') } `;
+    ? chalk`{bold.hex('#160').bgHex('#be0')  0 }{hex('#be0').bgHex('#169') }${name}{bgHex('#555')  ${cwd} }{hex('#555') } `
+    : chalk`{bold.white.bgHex('#700')  ${this.status} }{hex('#700').bgHex('#169') }${name}{bgHex('#555')  ${cwd} }{hex('#555') } `;
   }
 
   async setPrompt ()
@@ -63,10 +65,9 @@ const REPL = module.exports = class REPL
 
   async start ()
   {
-    await this.startReadline();
-
     // TODO: Do something more elegant to load dotfiles.
-    await this.evaluate('source ~/.blushrc; source .blushrc; echo -n');
+    await exec('source ~/.blushrc; source .blushrc; echo -n', this.state);
+    await this.startReadline();
   }
 
   async startReadline ()
@@ -114,12 +115,12 @@ const REPL = module.exports = class REPL
     catch (err) {
       this.status = 1;
       await this.setPrompt();
-      console.error(err.message);
+      print.err(err);
       return;
     }
 
     if (!ast) {
-      console.error('blush: invalid syntax:\n\nUnexpected end of input\n')
+      print.err('blush: invalid syntax:\n\nUnexpected end of input\n');
       this.status = 1;
       return await this.setPrompt();
     }
@@ -129,23 +130,47 @@ const REPL = module.exports = class REPL
     log('stop');
     this.stopReadline();
 
-    return evaluate(ast)
-    .then(() => {
-      // try
-      this.status = 0;
-    }, (err) => {
-      // catch
-      log(err);
-      if (isNaN(err)) {
-        console.error('blush:', err.message || err);
-      }
-      this.status = parseExitCode(err);
-    })
-    .then(async () => {
-      // finally
+    let result;
+    try {
+      this.status = await run(ast, this.state);
+      // this.status = 0;
+    }
+    catch (err) {
+      // log(err);
+      // if (isNaN(err)) {
+      //   console.error('blush:', err.message || err);
+      // }
+      // else if (typeof err === 'string') {
+      //   console.error(err);
+      // }
+      // this.status = parseExitCode(err);
+    }
+    finally {
       log('resume');
       await this.startReadline();
-    })
+      return result;
+    }
+
+    // return evaluate(ast)
+    // .then(() => {
+    //   // try
+    //   this.status = 0;
+    // }, (err) => {
+    //   // catch
+    //   log(err);
+    //   if (isNaN(err)) {
+    //     console.error('blush:', err.message || err);
+    //   }
+    //   else if (typeof err === 'string') {
+    //     console.error(err);
+    //   }
+    //   this.status = parseExitCode(err);
+    // })
+    // .then(async () => {
+    //   // finally
+    //   log('resume');
+    //   await this.startReadline();
+    // })
   }
 
   /** Lame completer */
@@ -176,3 +201,7 @@ const REPL = module.exports = class REPL
     }
   }
 };
+
+process.on('unhandledRejection', (reason, p) => {
+  print.err('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
