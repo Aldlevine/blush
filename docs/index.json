@@ -1517,637 +1517,6 @@
   {
     "__docId__": 101,
     "kind": "file",
-    "name": "src/eval.js",
-    "content": "const $ = exports;\nconst locateCommand = require('./utils/locate-command');\nconst parseExitCode = require('./utils/parse-exit-code');\nconst builtins = require('./builtins');\nconst log = require('./utils/debug')('blush:eval');\nconst {PassThrough} = require('stream');\nconst {spawn} = require('child_process');\nconst fs = require('fs');\n\n$.evaluate = async function (node, ctx={})\n{\n  if (node instanceof Array) {\n    for (let node of node) {\n      await $.evaluate(node);\n    }\n  }\n\n  if (!node || !(node.type in $)) {\n    return log('node type \\'%s\\' not implemented', node && node.type || node);\n  }\n\n return await $[node.type](node, ctx);\n}\n\n$.program = async function (node, ctx)\n{\n  log('evaluate program');\n  const {body} = node;\n  return body && await $.evaluate(body, ctx);\n}\n\n$.list = async function (node, ctx)\n{\n  log('evaluate list');\n  const {commands} = node;\n  const {pipe_stdin, pipe_stdout} = ctx;\n\n  let exitCode = 0;\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd = commands[i];\n    const cmd_ctx = {};\n    const modifier = cmd.modifier && await $.evaluate(cmd.modifier);\n\n    log('modifier: %s; exit-code: %d', modifier, exitCode);\n    if (modifier == 'and' && !!exitCode) {\n      continue;\n    }\n    if (modifier == 'or' && !exitCode) {\n      continue;\n    }\n\n    if (pipe_stdin) {\n      cmd_ctx.pipe_stdin = pipe_stdin;\n    }\n\n    if (pipe_stdout) {\n      cmd_ctx.pipe_stdout = new PassThrough;\n      cmd_ctx.pipe_stdout\n      .on('data', (data) => {\n        pipe_stdout.write(data);\n      })\n      .on('error', (err) => {\n      })\n    }\n\n    try {\n      await $.evaluate(cmd, cmd_ctx);\n      exitCode = 0;\n    }\n    catch (err) {\n      log('command errored');\n      exitCode = err;\n      // throw err;\n    }\n  }\n\n  if (pipe_stdout) {\n    pipe_stdout.end();\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\nconst NS_PER_SEC = 1e9;\nconst US_PER_SEC = 1e6;\nconst MS_PER_SEC = 1e3;\n\n$.pipeline = async function (node, ctx)\n{\n  log('evaluate pipeline');\n\n  const promises = [];\n  const {commands, time, negate} = node;\n  const {pipe_stdin, pipe_stdout, redir} = ctx;\n\n  let exitCode = 0;\n  let stream = null;\n\n  let start;\n  if (time) {\n    start = process.hrtime();\n  }\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd_ctx = {};\n    const cmd = commands[i];\n\n    if (i == 0) cmd_ctx.pipe_stdin = pipe_stdin;\n    else cmd_ctx.pipe_stdin = stream;\n\n    if (i == ii-1) cmd_ctx.pipe_stdout = pipe_stdout;\n    else cmd_ctx.pipe_stdout = stream = new PassThrough;\n\n    cmd_ctx.redir = redir;\n\n    promises.push($.evaluate(cmd, cmd_ctx));\n  }\n\n  try {\n    await Promise.all(promises);\n    if (negate) {\n      exitCode = 1;\n    }\n  }\n  catch (err) {\n    if (negate) {\n      exitCode = 0;\n    }\n    else {\n      exitCode = err;\n    }\n  }\n\n  if (time) {\n    const d = process.hrtime(start);\n    let time = d[0] * NS_PER_SEC + d[1];\n    let unit = 'ns';\n    if (time > NS_PER_SEC) {\n      time /= NS_PER_SEC;\n      unit = 's';\n    }\n    else if (time > NS_PER_SEC/MS_PER_SEC) {\n      time /= NS_PER_SEC/MS_PER_SEC;\n      unit = 'ms';\n    }\n    else if (time > NS_PER_SEC/US_PER_SEC) {\n      time /= NS_PER_SEC/US_PER_SEC;\n      unit = 'us';\n    }\n    console.log(`${time.toFixed(2)}${unit}`);\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\n/**\n * TODO: restore stdin if not consumed\n */\n$.simple_cmd = async function (node, ctx)\n{\n  let name = origName = $.word(node.name);\n  let args = node.args.map($.word);\n\n  log('evaluate simple_cmd \"%s\"', name);\n\n  const stdio = [0,1,2];\n\n  if (ctx.pipe_stdin) {\n    log('pipe into \"%s\"', name);\n    stdio[0] = 'pipe';\n  }\n\n  if (ctx.pipe_stdout) {\n    log('pipe out of \"%s\"', name);\n    stdio[1] = 'pipe';\n  }\n\n  const redirs = {};\n  for (let r of node.redir) {\n    const {io, stream} = await $.evaluate(r);\n    stdio[io] = 'pipe';\n    redirs[io] = redirs[io] || [];\n    redirs[io].push(stream);\n  }\n\n  await new Promise((res, rej) => {\n    let proc;\n    let alias = builtins.alias.getAlias(name);\n    if (alias) {\n      let [aliasName, ...aliasArgs] = alias.split(' ');\n      name = aliasName;\n      args = [...aliasArgs, ...args];\n    }\n    if (name in builtins) {\n      proc = new builtins[name](name, args, {stdio, argv0: origName});\n    }\n    else {\n      let cmdpath;\n\n      try {\n        cmdpath = locateCommand(name, node.dot);\n      }\n      catch (err) {\n        return rej(err);\n      }\n\n      proc = spawn(cmdpath, args, {stdio, argv0: origName});\n    }\n\n    if (ctx.pipe_stdin) {\n      if (ctx.pipe_stdin.readable) {\n        ctx.pipe_stdin\n        .on('data', (data) => {\n          if (proc.stdin.writable) {\n            proc.stdin.write(data);\n          }\n        })\n        .on('end', () => {\n          proc.stdin.end();\n        })\n        .on('error', (err) => {\n          rej(err);\n        })\n\n        proc.stdin\n        .on('error', (err) => {\n          rej(err);\n        })\n      }\n      else {\n        proc.stdin.end();\n      }\n    }\n\n    for (let io in redirs) {\n      proc.stdio[io]\n      .on('data', (data) => {\n        for (let stream of redirs[io]) {\n          stream.write(data);\n        }\n      })\n      .on('end', () => {\n        for (let stream of redirs[io]) {\n          stream.end();\n        }\n      });\n    }\n\n    if (ctx.pipe_stdout) {\n      proc.stdout\n      .on('data', (data) => {\n        ctx.pipe_stdout.write(data);\n      })\n      .on('end', () => {\n        ctx.pipe_stdout.end();\n      })\n      .on('error', (err) => {\n        rej(err);\n      })\n    }\n\n    proc\n    .on('exit', (code, signal) => {\n      log('exit \"%s\"', origName);\n      if (code || signal) return rej(code || signal);\n      res();\n    })\n    .on('error', (err) => {\n      rej(err);\n    })\n  });\n}\n\n$.group_cmd = async function (node, ctx)\n{\n  log('evaluate group_cmd');\n  return await $.evaluate(node.list, ctx);\n}\n\n$.if_cmd = async function (node, ctx)\n{\n  log('evaluate if_cmd');\n  let exitCode = 0;\n  await $.evaluate(node.if, ctx)\n  .then(async () => {\n    try {\n      await $.evaluate(node.then, ctx);\n    }\n    catch (err) { exitCode = err }\n  })\n  .catch(async (err) => {\n    try {\n      await $.evaluate(node.else, ctx);\n    }\n    catch (err) { exitCode = err }\n  })\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\n$.redir_ofile = async function (node, ctx)\n{\n  log('evaluate redir_ofile');\n  const fname = $.word(node.fname);\n  return {io: node.io, stream: fs.createWriteStream(fname)};\n}\n\n$.assign = async function (node, ctx)\n{\n  log('evaluate assign');\n  const {name, value} = node;\n  if (value) {\n    process.env[name] = $.word(value);\n  }\n  else {\n    delete process.env[name];\n  }\n}\n\n$.AND = function (node, ctx)\n{\n  return 'and';\n}\n\n$.OR = function (node, ctx)\n{\n  return 'or';\n}\n\n$.word = require('./word').evaluate;\n",
-    "static": true,
-    "longname": "/mnt/fast/Projects/blush/src/eval.js",
-    "access": "public",
-    "description": null,
-    "lineNumber": 1
-  },
-  {
-    "__docId__": 102,
-    "kind": "variable",
-    "name": "$",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~$",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 1,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 103,
-    "kind": "variable",
-    "name": "locateCommand",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~locateCommand",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 2,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 104,
-    "kind": "variable",
-    "name": "parseExitCode",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~parseExitCode",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 3,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 105,
-    "kind": "variable",
-    "name": "builtins",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~builtins",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 4,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 106,
-    "kind": "variable",
-    "name": "log",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~log",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 5,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 107,
-    "kind": "variable",
-    "name": "PassThrough",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~PassThrough",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 6,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 108,
-    "kind": "variable",
-    "name": "spawn",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~spawn",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 7,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 109,
-    "kind": "variable",
-    "name": "fs",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~fs",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 8,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 110,
-    "kind": "function",
-    "name": "evaluate",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~evaluate",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 10,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "optional": true,
-        "types": [
-          "{}"
-        ],
-        "defaultRaw": {},
-        "defaultValue": "{}"
-      }
-    ],
-    "return": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 111,
-    "kind": "function",
-    "name": "program",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~program",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 25,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 112,
-    "kind": "function",
-    "name": "list",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~list",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 32,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": null,
-    "ignore": true
-  },
-  {
-    "__docId__": 113,
-    "kind": "variable",
-    "name": "NS_PER_SEC",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~NS_PER_SEC",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 87,
-    "undocument": true,
-    "type": {
-      "types": [
-        "number"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 114,
-    "kind": "variable",
-    "name": "US_PER_SEC",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~US_PER_SEC",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 88,
-    "undocument": true,
-    "type": {
-      "types": [
-        "number"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 115,
-    "kind": "variable",
-    "name": "MS_PER_SEC",
-    "memberof": "src/eval.js",
-    "static": true,
-    "longname": "src/eval.js~MS_PER_SEC",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 89,
-    "undocument": true,
-    "type": {
-      "types": [
-        "number"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 116,
-    "kind": "function",
-    "name": "pipeline",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~pipeline",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 91,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": null,
-    "ignore": true
-  },
-  {
-    "__docId__": 117,
-    "kind": "function",
-    "name": "simple_cmd",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~simple_cmd",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": "TODO: restore stdin if not consumed",
-    "lineNumber": 164,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": null,
-    "ignore": true
-  },
-  {
-    "__docId__": 118,
-    "kind": "function",
-    "name": "group_cmd",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~group_cmd",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 279,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": {
-      "types": [
-        "*"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 119,
-    "kind": "function",
-    "name": "if_cmd",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~if_cmd",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 285,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": null,
-    "ignore": true
-  },
-  {
-    "__docId__": 120,
-    "kind": "function",
-    "name": "redir_ofile",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~redir_ofile",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 308,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": {
-      "types": [
-        "{\"io\": *, \"stream\": *}"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 121,
-    "kind": "function",
-    "name": "assign",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": true,
-    "static": true,
-    "longname": "src/eval.js~assign",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 315,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": null,
-    "ignore": true
-  },
-  {
-    "__docId__": 122,
-    "kind": "function",
-    "name": "AND",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": false,
-    "static": true,
-    "longname": "src/eval.js~AND",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 327,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": {
-      "types": [
-        "string"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 123,
-    "kind": "function",
-    "name": "OR",
-    "memberof": "src/eval.js",
-    "generator": false,
-    "async": false,
-    "static": true,
-    "longname": "src/eval.js~OR",
-    "access": "public",
-    "export": false,
-    "importPath": "blush/src/eval.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 332,
-    "undocument": true,
-    "params": [
-      {
-        "name": "node",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "ctx",
-        "types": [
-          "*"
-        ]
-      }
-    ],
-    "return": {
-      "types": [
-        "string"
-      ]
-    },
-    "ignore": true
-  },
-  {
-    "__docId__": 124,
-    "kind": "file",
     "name": "src/exec.js",
     "content": "const parse = require('./parse');\nconst {run} = require('./run');\nconst State = require('./state');\nconst {PassThrough} = require('stream');\n\nmodule.exports = async function exec (cmd, state=new State, ctx={})\n{\n  const pipe_stdout = new PassThrough;\n  let out = '';\n\n  return new Promise(async (res, rej) => {\n    pipe_stdout\n    .on('error', (err) => {\n      rej(err);\n    })\n    .on('data', (data) => {\n      out += data.toString();\n    })\n    .on('end', () => {\n      res(out);\n    });\n\n    if (typeof cmd === 'string') {\n      cmd = parse(cmd+'\\n');\n    }\n\n    try {\n      await run(cmd, state, {pipe_stdout});\n    }\n    catch (err) {\n      rej(err);\n    }\n  });\n}\n",
     "static": true,
@@ -2157,7 +1526,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 125,
+    "__docId__": 102,
     "kind": "variable",
     "name": "parse",
     "memberof": "src/exec.js",
@@ -2178,7 +1547,7 @@
     "ignore": true
   },
   {
-    "__docId__": 126,
+    "__docId__": 103,
     "kind": "variable",
     "name": "run",
     "memberof": "src/exec.js",
@@ -2199,7 +1568,7 @@
     "ignore": true
   },
   {
-    "__docId__": 127,
+    "__docId__": 104,
     "kind": "variable",
     "name": "State",
     "memberof": "src/exec.js",
@@ -2220,7 +1589,7 @@
     "ignore": true
   },
   {
-    "__docId__": 128,
+    "__docId__": 105,
     "kind": "variable",
     "name": "PassThrough",
     "memberof": "src/exec.js",
@@ -2241,7 +1610,7 @@
     "ignore": true
   },
   {
-    "__docId__": 129,
+    "__docId__": 106,
     "kind": "function",
     "name": "exec",
     "memberof": "src/exec.js",
@@ -2287,7 +1656,7 @@
     }
   },
   {
-    "__docId__": 130,
+    "__docId__": 107,
     "kind": "file",
     "name": "src/index.js",
     "content": "#!/usr/bin/env node\n\nconst parseExitCode = require('./utils/parse-exit-code');\nconst args = process.argv.slice(2);\n\n// TODO: Parse options.\n\nconst opts = {\n};\n\nconst files = [];\n\nfor (let arg of args) {\n  if (arg.charAt(0) == '-') {\n    // option\n  }\n  else {\n    // file\n    files.push(arg);\n  }\n}\n\n;(async () => {\n\n  if (files.length) {\n    let exitCode = 0;\n    const parse = require('./parse');\n    const {run} = require('./run');\n    for (let file of files) {\n      // try {\n        await run(parse.file(file));\n        exitCode = 0;\n      // }\n      // catch (err) {\n      //   print.err(err);\n      //   exitCode = err;\n      // }\n    }\n    process.exit(parseExitCode(exitCode));\n  }\n  else {\n    const REPL = require('./repl');\n    const repl = new REPL();\n    try {\n      await repl.start();\n    }\n    catch (err) {\n      exitCode = err;\n    }\n  }\n})();\n",
@@ -2298,7 +1667,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 131,
+    "__docId__": 108,
     "kind": "variable",
     "name": "parseExitCode",
     "memberof": "src/index.js",
@@ -2319,7 +1688,7 @@
     "ignore": true
   },
   {
-    "__docId__": 132,
+    "__docId__": 109,
     "kind": "variable",
     "name": "args",
     "memberof": "src/index.js",
@@ -2340,7 +1709,7 @@
     "ignore": true
   },
   {
-    "__docId__": 133,
+    "__docId__": 110,
     "kind": "variable",
     "name": "opts",
     "memberof": "src/index.js",
@@ -2361,7 +1730,7 @@
     "ignore": true
   },
   {
-    "__docId__": 134,
+    "__docId__": 111,
     "kind": "variable",
     "name": "files",
     "memberof": "src/index.js",
@@ -2382,7 +1751,7 @@
     "ignore": true
   },
   {
-    "__docId__": 135,
+    "__docId__": 112,
     "kind": "file",
     "name": "src/run.js",
     "content": "const $ = exports;\nconst locateCommand = require('./utils/locate-command');\nconst parseExitCode = require('./utils/parse-exit-code');\nconst print = require('./utils/print');\nconst State = require('./state');\nconst builtins = require('./builtins');\nconst log = require('./utils/debug')('blush:run');\nconst {PassThrough} = require('stream');\nconst {spawn} = require('child_process');\nconst fs = require('fs');\n\n$.run = async function (...args)\n{\n  try {\n    await $.evaluate(...args);\n  }\n  catch (err) {\n    log(err);\n    print.err(err);\n    return parseExitCode(err);\n  }\n\n  return 0;\n}\n\n$.evaluate = async function (node, state=new State, ctx={})\n{\n  if (node instanceof Array) {\n    for (let node of node) {\n      await $.evaluate(node, state, ctx);\n    }\n    return;\n  }\n\n  if (!node || !(node.type in $)) {\n    return log('node type \\'%s\\' not implemented', node && node.type || node);\n  }\n\n  return await $[node.type](node, state, ctx);\n}\n\n$.program = async function (node, state, ctx)\n{\n  log('evaluate program');\n  const {body} = node;\n  return body && await $.evaluate(body, state, ctx);\n}\n\n$.list = async function (node, state, ctx)\n{\n  log('evaluate list');\n  const {commands} = node;\n  const {pipe_stdin, pipe_stdout} = ctx;\n\n  let exitCode = 0;\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd = commands[i];\n    const cmd_ctx = {};\n    const modifier = cmd.modifier && await $.evaluate(cmd.modifier);\n\n    log('modifier: %s; exit-code: %d', modifier, exitCode);\n    if (modifier == 'and' && !!exitCode) {\n      continue;\n    }\n    if (modifier == 'or' && !exitCode) {\n      continue;\n    }\n\n    if (pipe_stdin) {\n      cmd_ctx.pipe_stdin = pipe_stdin;\n    }\n\n    if (pipe_stdout) {\n      cmd_ctx.pipe_stdout = new PassThrough;\n      cmd_ctx.pipe_stdout\n      .on('data', (data) => {\n        pipe_stdout.write(data);\n      })\n      .on('error', (err) => {\n      })\n    }\n\n    try {\n      await $.evaluate(cmd, state, cmd_ctx);\n      exitCode = 0;\n    }\n    catch (err) {\n      log('command errored %O', err);\n      exitCode = err;\n    }\n  }\n\n  if (pipe_stdout) {\n    pipe_stdout.end();\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\nconst NS_PER_SEC = 1e9;\nconst US_PER_SEC = 1e6;\nconst MS_PER_SEC = 1e3;\n\n$.pipeline = async function (node, state, ctx)\n{\n  log('evaluate pipeline');\n\n  const promises = [];\n  const {commands, time, negate} = node;\n  const {pipe_stdin, pipe_stdout, redir} = ctx;\n\n  const streams = [];\n  let stream = null;\n  let exitCode = 0;\n\n  let start;\n  if (time) {\n    start = process.hrtime();\n  }\n\n  for (let i=0, ii=commands.length; i<ii; i++) {\n    const cmd_ctx = {};\n    const cmd = commands[i];\n\n    if (i == 0) cmd_ctx.pipe_stdin = pipe_stdin;\n    else cmd_ctx.pipe_stdin = stream;\n\n    if (i == ii-1) cmd_ctx.pipe_stdout = pipe_stdout;\n    else streams.push(cmd_ctx.pipe_stdout = stream = new PassThrough);\n\n    cmd_ctx.redir = redir;\n\n    promises.push($.evaluate(cmd, state, cmd_ctx).catch((err) => {\n      cmd_ctx.pipe_stdin && cmd_ctx.pipe_stdin.end();\n      cmd_ctx.pipe_stdout && cmd_ctx.pipe_stdout.end();\n      exitCode = err;\n    }));\n  }\n\n  try {\n    await Promise.all(promises);\n    if (negate) {\n      exitCode = 1;\n    }\n  }\n  catch (err) {\n    // for (let stream of streams) {\n    //   stream.end();\n    // }\n    if (negate) {\n      exitCode = 0;\n    }\n    else {\n      exitCode = err;\n    }\n  }\n\n  if (time) {\n    const d = process.hrtime(start);\n    let time = d[0] * NS_PER_SEC + d[1];\n    let unit = 'ns';\n    if (time > NS_PER_SEC) {\n      time /= NS_PER_SEC;\n      unit = 's';\n    }\n    else if (time > NS_PER_SEC/MS_PER_SEC) {\n      time /= NS_PER_SEC/MS_PER_SEC;\n      unit = 'ms';\n    }\n    else if (time > NS_PER_SEC/US_PER_SEC) {\n      time /= NS_PER_SEC/US_PER_SEC;\n      unit = 'us';\n    }\n    print(`${time.toFixed(2)}${unit}`);\n  }\n\n  if (exitCode !== 0) {\n    throw exitCode;\n  }\n}\n\n/**\n * TODO: restore stdin if not consumed\n */\n$.simple_cmd = async function (node, state, ctx)\n{\n  let name = origName = await $.word(node.name, state, ctx);\n  let args = [];\n  for (let arg of node.args) {\n    args.push(await $.word(arg, state, ctx));\n  }\n\n  log('evaluate simple_cmd \"%s\"', name);\n\n  const stdio = [0,1,2];\n  ctx.stdio = ctx.stdio || [];\n\n  if (ctx.pipe_stdin) {\n    log('pipe into \"%s\"', name);\n    stdio[0] = 'pipe';\n    ctx.stdio[0] = ctx.pipe_stdin;\n  }\n\n  if (ctx.pipe_stdout) {\n    log('pipe out of \"%s\"', name);\n    stdio[1] = 'pipe';\n    ctx.stdio[1] = ctx.pipe_stdout;\n  }\n\n  const redirs = {};\n  for (let r of node.redir) {\n    if (!r) continue;\n    const {type, io, stream, to} = await $.evaluate(r);\n\n    redirs[io] = redirs[io] || [];\n\n    stdio[io] = 'pipe';\n    if (type === 'fd') {\n      redirs[io].push(to);\n    }\n    else {\n      redirs[io].push(stream);\n    }\n  }\n\n  state.save();\n  await new Promise((res, rej) => {\n    let proc;\n    let alias = builtins.alias.getAlias(name);\n    if (alias) {\n      let [aliasName, ...aliasArgs] = alias.split(' ');\n      name = aliasName;\n      args = [...aliasArgs, ...args];\n    }\n    if (name in builtins) {\n      proc = new builtins[name](name, args, {stdio, argv0: origName}, state);\n    }\n    else {\n      let cmdpath;\n\n      cmdpath = locateCommand(name, node.dot);\n\n      proc = spawn(cmdpath, args, {stdio, argv0: origName, env: state.env});\n    }\n\n    if (ctx.pipe_stdin) {\n      if (ctx.pipe_stdin.readable) {\n        ctx.pipe_stdin\n        .on('data', (data) => {\n          if (proc.stdin.writable) {\n            proc.stdin.write(data);\n          }\n        })\n        .on('end', () => {\n          proc.stdin.end();\n        })\n        .on('error', (err) => {\n          proc.stdin.end();\n          rej(err);\n        })\n\n        proc.stdin\n        .on('error', (err) => {\n          rej(err);\n        })\n      }\n      else {\n        proc.stdin.end();\n      }\n    }\n\n    for (let io in redirs) {\n      proc.stdio[io]\n      .on('data', (data) => {\n        for (let stream of redirs[io]) {\n          if (!isNaN(stream)) {\n            ctx.stdio[stream].write(data);\n          };\n          if (stream && stream.writable) {\n            stream.write(data);\n          }\n        }\n      })\n      .on('end', () => {\n        for (let stream of redirs[io]) {\n          if (!isNaN(stream)) continue;\n          if (stream && stream.writable) {\n            stream.end();\n          }\n        }\n      })\n      .on('error', (err) => {\n        for (let stream of redirs[io]) {\n          if (stream && isNaN(stream)) continue;\n          proc.stdio[stream].end();\n        }\n      })\n    }\n\n    if (ctx.pipe_stdout) {\n      proc.stdout\n      .on('data', (data) => {\n        ctx.pipe_stdout.write(data);\n      })\n      .on('end', () => {\n        ctx.pipe_stdout.end();\n      })\n      .on('error', (err) => {\n        ctx.pipe_stdout.end();\n        rej(err);\n      })\n    }\n\n    proc\n    .on('exit', (code, signal) => {\n      log('exit \"%s\"', origName);\n      if (code || signal) return rej(code || signal);\n      res();\n    })\n    .on('error', (err) => {\n      rej(err);\n    })\n  });\n  state.restore();\n}\n\n$.group_cmd = async function (node, state, ctx)\n{\n  log('evaluate group_cmd');\n  return await $.evaluate(node.list, state, ctx);\n}\n\n$.if_cmd = async function (node, state, ctx)\n{\n  log('evaluate if_cmd');\n  // let exitCode = 0;\n\n  await $.evaluate(node.if, state, ctx)\n  .then(async () => {\n    // try {\n      await $.evaluate(node.then, state, ctx);\n    // }\n    // catch (err) { exitCode = err }\n  })\n  .catch(async (err) => {\n    // try {\n      await $.evaluate(node.else, state, ctx);\n    // }\n    // catch (err) { exitCode = err }\n  })\n\n  // if (exitCode !== 0) {\n  //   throw exitCode;\n  // }\n}\n\n$.subshell_cmd = async function (node, state, ctx)\n{\n  log('evaluate subshell_cmd');\n  state.save();\n  await $.evaluate(node.list, state, ctx);\n  state.restore();\n}\n\n$.redir_ofile = async function (node, state, ctx)\n{\n  log('evaluate redir_ofile');\n  const fname = await $.word(node.fname, state, ctx);\n  return {type: 'file', io: node.io, stream: fs.createWriteStream(fname)};\n}\n\n$.redir_fd = async function (node, state, ctx)\n{\n  log('evaluate redir_fd');\n  return {type: 'fd', io: node.io, to: node.to};\n}\n\n$.assign = async function (node, state, ctx)\n{\n  log('evaluate assign');\n  const {name, value} = node;\n  if (value) {\n    let res = await $.word(value, state, ctx);\n    process.env[name] = res;\n  }\n  else {\n    delete process.env[name];\n  }\n}\n\n$.AND = function (node, state, ctx)\n{\n  return 'and';\n}\n\n$.OR = function (node, state, ctx)\n{\n  return 'or';\n}\n\n$.word = require('./word').evaluate;\n",
@@ -2393,7 +1762,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 136,
+    "__docId__": 113,
     "kind": "variable",
     "name": "$",
     "memberof": "src/run.js",
@@ -2414,7 +1783,7 @@
     "ignore": true
   },
   {
-    "__docId__": 137,
+    "__docId__": 114,
     "kind": "variable",
     "name": "locateCommand",
     "memberof": "src/run.js",
@@ -2435,7 +1804,7 @@
     "ignore": true
   },
   {
-    "__docId__": 138,
+    "__docId__": 115,
     "kind": "variable",
     "name": "parseExitCode",
     "memberof": "src/run.js",
@@ -2456,7 +1825,7 @@
     "ignore": true
   },
   {
-    "__docId__": 139,
+    "__docId__": 116,
     "kind": "variable",
     "name": "print",
     "memberof": "src/run.js",
@@ -2477,7 +1846,7 @@
     "ignore": true
   },
   {
-    "__docId__": 140,
+    "__docId__": 117,
     "kind": "variable",
     "name": "State",
     "memberof": "src/run.js",
@@ -2498,7 +1867,7 @@
     "ignore": true
   },
   {
-    "__docId__": 141,
+    "__docId__": 118,
     "kind": "variable",
     "name": "builtins",
     "memberof": "src/run.js",
@@ -2519,7 +1888,7 @@
     "ignore": true
   },
   {
-    "__docId__": 142,
+    "__docId__": 119,
     "kind": "variable",
     "name": "log",
     "memberof": "src/run.js",
@@ -2540,7 +1909,7 @@
     "ignore": true
   },
   {
-    "__docId__": 143,
+    "__docId__": 120,
     "kind": "variable",
     "name": "PassThrough",
     "memberof": "src/run.js",
@@ -2561,7 +1930,7 @@
     "ignore": true
   },
   {
-    "__docId__": 144,
+    "__docId__": 121,
     "kind": "variable",
     "name": "spawn",
     "memberof": "src/run.js",
@@ -2582,7 +1951,7 @@
     "ignore": true
   },
   {
-    "__docId__": 145,
+    "__docId__": 122,
     "kind": "variable",
     "name": "fs",
     "memberof": "src/run.js",
@@ -2603,7 +1972,7 @@
     "ignore": true
   },
   {
-    "__docId__": 146,
+    "__docId__": 123,
     "kind": "function",
     "name": "run",
     "memberof": "src/run.js",
@@ -2635,7 +2004,7 @@
     "ignore": true
   },
   {
-    "__docId__": 147,
+    "__docId__": 124,
     "kind": "function",
     "name": "evaluate",
     "memberof": "src/run.js",
@@ -2682,7 +2051,7 @@
     "ignore": true
   },
   {
-    "__docId__": 148,
+    "__docId__": 125,
     "kind": "function",
     "name": "program",
     "memberof": "src/run.js",
@@ -2725,7 +2094,7 @@
     "ignore": true
   },
   {
-    "__docId__": 149,
+    "__docId__": 126,
     "kind": "function",
     "name": "list",
     "memberof": "src/run.js",
@@ -2764,7 +2133,7 @@
     "ignore": true
   },
   {
-    "__docId__": 150,
+    "__docId__": 127,
     "kind": "variable",
     "name": "NS_PER_SEC",
     "memberof": "src/run.js",
@@ -2785,7 +2154,7 @@
     "ignore": true
   },
   {
-    "__docId__": 151,
+    "__docId__": 128,
     "kind": "variable",
     "name": "US_PER_SEC",
     "memberof": "src/run.js",
@@ -2806,7 +2175,7 @@
     "ignore": true
   },
   {
-    "__docId__": 152,
+    "__docId__": 129,
     "kind": "variable",
     "name": "MS_PER_SEC",
     "memberof": "src/run.js",
@@ -2827,7 +2196,7 @@
     "ignore": true
   },
   {
-    "__docId__": 153,
+    "__docId__": 130,
     "kind": "function",
     "name": "pipeline",
     "memberof": "src/run.js",
@@ -2866,7 +2235,7 @@
     "ignore": true
   },
   {
-    "__docId__": 154,
+    "__docId__": 131,
     "kind": "function",
     "name": "simple_cmd",
     "memberof": "src/run.js",
@@ -2904,7 +2273,7 @@
     "ignore": true
   },
   {
-    "__docId__": 155,
+    "__docId__": 132,
     "kind": "function",
     "name": "group_cmd",
     "memberof": "src/run.js",
@@ -2947,7 +2316,7 @@
     "ignore": true
   },
   {
-    "__docId__": 156,
+    "__docId__": 133,
     "kind": "function",
     "name": "if_cmd",
     "memberof": "src/run.js",
@@ -2986,7 +2355,7 @@
     "ignore": true
   },
   {
-    "__docId__": 157,
+    "__docId__": 134,
     "kind": "function",
     "name": "subshell_cmd",
     "memberof": "src/run.js",
@@ -3025,7 +2394,7 @@
     "ignore": true
   },
   {
-    "__docId__": 158,
+    "__docId__": 135,
     "kind": "function",
     "name": "redir_ofile",
     "memberof": "src/run.js",
@@ -3068,7 +2437,7 @@
     "ignore": true
   },
   {
-    "__docId__": 159,
+    "__docId__": 136,
     "kind": "function",
     "name": "redir_fd",
     "memberof": "src/run.js",
@@ -3111,7 +2480,7 @@
     "ignore": true
   },
   {
-    "__docId__": 160,
+    "__docId__": 137,
     "kind": "function",
     "name": "assign",
     "memberof": "src/run.js",
@@ -3150,7 +2519,7 @@
     "ignore": true
   },
   {
-    "__docId__": 161,
+    "__docId__": 138,
     "kind": "function",
     "name": "AND",
     "memberof": "src/run.js",
@@ -3193,7 +2562,7 @@
     "ignore": true
   },
   {
-    "__docId__": 162,
+    "__docId__": 139,
     "kind": "function",
     "name": "OR",
     "memberof": "src/run.js",
@@ -3236,7 +2605,7 @@
     "ignore": true
   },
   {
-    "__docId__": 163,
+    "__docId__": 140,
     "kind": "file",
     "name": "src/state.js",
     "content": "let idx = 0;\n\nmodule.exports = class State\n{\n  constructor ({\n    env = process.env,\n    dirstack = [process.cwd()]\n  }={})\n  {\n    this.env = env;\n    this.dirstack = dirstack;\n\n    this.savedStates = [];\n  }\n\n  save ()\n  {\n    this.env = process.env;\n    this.savedStates.push({\n      env: Object.assign({}, this.env),\n      dirstack: this.dirstack.slice(),\n    })\n  }\n\n  restore ()\n  {\n    const {env, dirstack} = this.savedStates.pop();\n    process.env = this.env = env;\n    this.dirstack = dirstack;\n  }\n}\n",
@@ -3247,7 +2616,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 164,
+    "__docId__": 141,
     "kind": "variable",
     "name": "idx",
     "memberof": "src/state.js",
@@ -3268,7 +2637,7 @@
     "ignore": true
   },
   {
-    "__docId__": 165,
+    "__docId__": 142,
     "kind": "class",
     "name": "State",
     "memberof": "src/state.js",
@@ -3284,7 +2653,7 @@
     "interface": false
   },
   {
-    "__docId__": 166,
+    "__docId__": 143,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/state.js~State",
@@ -3298,7 +2667,7 @@
     "undocument": true
   },
   {
-    "__docId__": 167,
+    "__docId__": 144,
     "kind": "member",
     "name": "env",
     "memberof": "src/state.js~State",
@@ -3315,7 +2684,7 @@
     }
   },
   {
-    "__docId__": 168,
+    "__docId__": 145,
     "kind": "member",
     "name": "dirstack",
     "memberof": "src/state.js~State",
@@ -3332,7 +2701,7 @@
     }
   },
   {
-    "__docId__": 169,
+    "__docId__": 146,
     "kind": "member",
     "name": "savedStates",
     "memberof": "src/state.js~State",
@@ -3349,7 +2718,7 @@
     }
   },
   {
-    "__docId__": 170,
+    "__docId__": 147,
     "kind": "method",
     "name": "save",
     "memberof": "src/state.js~State",
@@ -3365,7 +2734,7 @@
     "return": null
   },
   {
-    "__docId__": 172,
+    "__docId__": 149,
     "kind": "method",
     "name": "restore",
     "memberof": "src/state.js~State",
@@ -3381,7 +2750,7 @@
     "return": null
   },
   {
-    "__docId__": 174,
+    "__docId__": 151,
     "kind": "file",
     "name": "src/utils/error.js",
     "content": "module.exports = class BlushError extends Error\n{\n  constructor (message, errno)\n  {\n    super(message);\n    this.errno = errno;\n  }\n}\n",
@@ -3392,7 +2761,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 175,
+    "__docId__": 152,
     "kind": "class",
     "name": "BlushError",
     "memberof": "src/utils/error.js",
@@ -3411,7 +2780,7 @@
     ]
   },
   {
-    "__docId__": 176,
+    "__docId__": 153,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/utils/error.js~BlushError",
@@ -3425,7 +2794,7 @@
     "undocument": true
   },
   {
-    "__docId__": 177,
+    "__docId__": 154,
     "kind": "member",
     "name": "errno",
     "memberof": "src/utils/error.js~BlushError",
@@ -3442,7 +2811,7 @@
     }
   },
   {
-    "__docId__": 178,
+    "__docId__": 155,
     "kind": "file",
     "name": "src/utils/locate-command.js",
     "content": "const BlushError = require('./error.js');\nconst glob = require('glob');\nconst path = require('path');\nconst log = require('./debug')('blush:locate-command');\nconst fs = require('fs');\n\nmodule.exports = function locateCommand (name, local)\n{\n  let pattern;\n  let isFile = local;\n  if (local) {\n    pattern = path.resolve(process.cwd(), name);\n  }\n  else if (name.charAt(0) === '/') {\n    isFile = true;\n    pattern = name;\n  }\n  else {\n    paths = process.env.PATH.split(path.delimiter);\n    pattern = '{'+paths.map((p) => path.resolve(p, name)).join(',')+'}';\n  }\n\n  const result = glob.sync(pattern)[0];\n\n  if (result) {\n    const stats = fs.statSync(result);\n\n    if (stats.isFile()) {\n\n      try { fs.accessSync(result, fs.constants.X_OK) }\n      catch (err) {\n        throw new BlushError(`${name}: Permission denied`, 126);\n      }\n\n      return result;\n    }\n\n    if (stats.isDirectory()) {\n      throw new BlushError(`${name}: Is a directory`, 126)\n    }\n  }\n\n  if (isFile) {\n    throw new BlushError(`${name}: No such file or directory`, 127)\n  }\n\n  throw new BlushError(`${name}: command not found`, 127)\n}\n",
@@ -3453,7 +2822,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 179,
+    "__docId__": 156,
     "kind": "variable",
     "name": "BlushError",
     "memberof": "src/utils/locate-command.js",
@@ -3474,7 +2843,7 @@
     "ignore": true
   },
   {
-    "__docId__": 180,
+    "__docId__": 157,
     "kind": "variable",
     "name": "glob",
     "memberof": "src/utils/locate-command.js",
@@ -3495,7 +2864,7 @@
     "ignore": true
   },
   {
-    "__docId__": 181,
+    "__docId__": 158,
     "kind": "variable",
     "name": "path",
     "memberof": "src/utils/locate-command.js",
@@ -3516,7 +2885,7 @@
     "ignore": true
   },
   {
-    "__docId__": 182,
+    "__docId__": 159,
     "kind": "variable",
     "name": "log",
     "memberof": "src/utils/locate-command.js",
@@ -3537,7 +2906,7 @@
     "ignore": true
   },
   {
-    "__docId__": 183,
+    "__docId__": 160,
     "kind": "variable",
     "name": "fs",
     "memberof": "src/utils/locate-command.js",
@@ -3558,7 +2927,7 @@
     "ignore": true
   },
   {
-    "__docId__": 184,
+    "__docId__": 161,
     "kind": "function",
     "name": "locateCommand",
     "memberof": "src/utils/locate-command.js",
@@ -3594,7 +2963,7 @@
     }
   },
   {
-    "__docId__": 185,
+    "__docId__": 162,
     "kind": "file",
     "name": "src/utils/parse-exit-code.js",
     "content": "const os = require('os');\n\nmodule.exports = function parseExitCode (err)\n{\n  if (!isNaN(err)) {\n    return err;\n  }\n  else if (typeof err === 'string') {\n    const code = os.constants.signals[err] + 128;\n    return code;\n  }\n  else if (err.errno) {\n    let code = err.errno;\n    if (typeof code === 'string') {\n      code = os.constants.errno[code];\n    }\n    return code;\n  }\n  return -1;\n}\n",
@@ -3605,7 +2974,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 186,
+    "__docId__": 163,
     "kind": "variable",
     "name": "os",
     "memberof": "src/utils/parse-exit-code.js",
@@ -3626,7 +2995,7 @@
     "ignore": true
   },
   {
-    "__docId__": 187,
+    "__docId__": 164,
     "kind": "function",
     "name": "parseExitCode",
     "memberof": "src/utils/parse-exit-code.js",
@@ -3656,7 +3025,7 @@
     }
   },
   {
-    "__docId__": 188,
+    "__docId__": 165,
     "kind": "file",
     "name": "src/word.js",
     "content": "const log = require('./utils/debug')('blush:word');\nconst os = require('os');\n\nconst $ = exports;\n\n$.evaluate = async function evaluate (word, state, ctx)\n{\n  const type = word.type && word.type.toLowerCase();\n  if (!(type in $)) {\n    return log('node type \\'%s\\' not implemented', word.type);\n  }\n  return await $[type](word, state, ctx);\n}\n\n$.word = async function word (word, state, ctx)\n{\n  return $.expand(word.value, state, ctx);\n}\n\n$.dstr = async function string (word, state, ctx)\n{\n  let out = '';\n  for (let part of word.parts) {\n    out += await $.evaluate(part, state, ctx);\n  }\n  return await $.expand_env(out, state, ctx);\n}\n\n$.dstr_string =\n$.sstr =\n$.estr = async function string (word, state, ctx)\n{\n  return word.value;\n}\n\n$.loose_word = async function loose_word (word, state, ctx)\n{\n  let out = '';\n  for (let part of word.parts) {\n    out += await $.evaluate(part, state, ctx);\n  }\n  return out;\n  // return word.parts.reduce(async (a, w) => a += await $.evaluate(w), '');\n}\n\n$.dstr_sub_word = async function dstr_sub_word (word, state, ctx)\n{\n  const exec = require('./exec');\n  state.save();\n  let out = await exec(word.list, state, ctx);\n  state.restore();\n  return out.replace(/\\s+$/, '');\n}\n\n$.sub_word = async function sub_word (word, state, ctx)\n{\n  const exec = require('./exec');\n  state.save();\n  let out = await exec(word.list, state, ctx);\n  state.restore();\n  return out.replace(/\\s+$/, '').replace(/\\s+/g, ' ');\n}\n\n$.expand = async function (str, state, ctx)\n{\n  str = await $.expand_tilde(str, state, ctx);\n  str = await $.expand_env(str, state, ctx);\n  return str;\n}\n\n$.expand_env = async function (str, state, ctx)\n{\n  return str\n  .replace(/\\$[a-zA-Z_][a-zA-Z0-9_]*/g, (match) => {\n    const name = match.slice(1);\n    return process.env[name] || '';\n  })\n  .replace(/\\$\\{[a-zA-Z_][a-zA-Z0-9_]*\\}/g, (match) => {\n    const name = match.slice(2, -1);\n    return process.env[name] || '';\n  });\n}\n\n$.expand_tilde = async function (str, state, ctx)\n{\n  return str.replace(/^~/, os.homedir());\n}\n",
@@ -3667,7 +3036,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 189,
+    "__docId__": 166,
     "kind": "variable",
     "name": "log",
     "memberof": "src/word.js",
@@ -3688,7 +3057,7 @@
     "ignore": true
   },
   {
-    "__docId__": 190,
+    "__docId__": 167,
     "kind": "variable",
     "name": "os",
     "memberof": "src/word.js",
@@ -3709,7 +3078,7 @@
     "ignore": true
   },
   {
-    "__docId__": 191,
+    "__docId__": 168,
     "kind": "variable",
     "name": "$",
     "memberof": "src/word.js",
@@ -3730,7 +3099,7 @@
     "ignore": true
   },
   {
-    "__docId__": 192,
+    "__docId__": 169,
     "kind": "function",
     "name": "evaluate",
     "memberof": "src/word.js",
@@ -3773,7 +3142,7 @@
     "ignore": true
   },
   {
-    "__docId__": 193,
+    "__docId__": 170,
     "kind": "function",
     "name": "word",
     "memberof": "src/word.js",
@@ -3816,7 +3185,7 @@
     "ignore": true
   },
   {
-    "__docId__": 194,
+    "__docId__": 171,
     "kind": "function",
     "name": "dstr",
     "memberof": "src/word.js",
@@ -3859,7 +3228,7 @@
     "ignore": true
   },
   {
-    "__docId__": 195,
+    "__docId__": 172,
     "kind": "function",
     "name": "loose_word",
     "memberof": "src/word.js",
@@ -3902,7 +3271,7 @@
     "ignore": true
   },
   {
-    "__docId__": 196,
+    "__docId__": 173,
     "kind": "function",
     "name": "dstr_sub_word",
     "memberof": "src/word.js",
@@ -3945,7 +3314,7 @@
     "ignore": true
   },
   {
-    "__docId__": 197,
+    "__docId__": 174,
     "kind": "function",
     "name": "sub_word",
     "memberof": "src/word.js",
@@ -3988,7 +3357,7 @@
     "ignore": true
   },
   {
-    "__docId__": 198,
+    "__docId__": 175,
     "kind": "function",
     "name": "expand",
     "memberof": "src/word.js",
@@ -4031,7 +3400,7 @@
     "ignore": true
   },
   {
-    "__docId__": 199,
+    "__docId__": 176,
     "kind": "function",
     "name": "expand_env",
     "memberof": "src/word.js",
@@ -4074,7 +3443,7 @@
     "ignore": true
   },
   {
-    "__docId__": 200,
+    "__docId__": 177,
     "kind": "function",
     "name": "expand_tilde",
     "memberof": "src/word.js",

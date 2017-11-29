@@ -516,12 +516,6 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
-    "src/eval.js",
-    "file/src/eval.js.html",
-    "src/eval.js",
-    "file"
-  ],
-  [
     "src/exec.js",
     "file/src/exec.js.html",
     "src/exec.js",
