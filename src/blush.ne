@@ -90,11 +90,13 @@
       SUBSTITUTE: {match: '$(', push: 'main'},
       LPAREN: {match: '(', push: 'main'},
       RPAREN: {match: ')', pop: true},
+      LJS: {match: '{%', push: 'javascript'},
       LBRACE: '{',
       RBRACE: '}',
       LMATH: '[[',
       RMATH: ']]',
       EQ: '=',
+      NUMBER: /[0-9]+/,
       ASSIGN: /[a-zA-Z_][a-zA-Z0-9_]*=/,
       NAME: {
         match: /(?:[a-zA-Z_][a-zA-Z0-9_]*)(?=\s)/,
@@ -136,6 +138,12 @@
     sstring: {
       SSTR: { match: /[^'\n]+/, value: unescape },
       SQUO: { match: `'`, pop: true }
+    },
+    javascript: {
+      DQUO: { match: `"`, push: 'dstring' },
+      SQUO: { match: `'`, push: 'sstring' },
+      RJS: { match: '%\}', pop: true },
+      JAVASCRIPT: { match: /(?:[^%"']|(?:%(?!\})))+/, lineBreaks: true},
     }
   });
 %}
@@ -209,11 +217,12 @@ pipeline     -> (%TIME __):? (%BANG __):? command (_ pipe_sep empty command):*
                       raw[i-1].pipe_stdout = true;
                       raw[i+1].pipe_stdin = true;
                       if (token.value.type === 'PIPEAND') {
-                        raw[i-1].redir[2] = {
+                        raw[i-1].redir = raw[i-1].redir || [];
+                        raw[i-1].redir.push({
                           type: 'redir_fd',
                           io: 2,
                           to: 1
-                        };
+                        });
                       }
                     }
                     else {
@@ -239,7 +248,6 @@ pipe_sep     -> (%PIPE | %PIPEAND)
 time         -> %TIME
                   {% ([time, bang]) => ({
                     type: 'time',
-                    // bang: !!one(bang),
                   }) %}
 
 # TODO: Add redirects
@@ -262,7 +270,7 @@ simple_cmd   -> (assign __):* strict_word (__ loose_word):*
                   }
                   return {
                     type: 'simple_cmd',
-                    params: merge(assign),
+                    params: merge(assign).map((p) => (p.local = true, p)),
                     name,
                     args,
                     dot,
@@ -325,6 +333,8 @@ subshell_cmd -> %LPAREN empty list_body (_ list_term):? _ %RPAREN
                   }
                 } %}
 
+
+
 assign       -> %ASSIGN (word):?
                 {% ([assign, word]) => {
                   const name = one(assign).value.slice(0, -1);
@@ -335,7 +345,7 @@ assign       -> %ASSIGN (word):?
                   }
                 } %}
 
-loose_word   -> (strict_word | keyword_word | op_word | assign_word ):+
+loose_word   -> (strict_word | keyword_word | op_word | assign_word):+
                 {% (words) => {
                   return loose_word(merge(...words));
                 } %}
@@ -344,7 +354,7 @@ strict_word  -> (word):+
                 {% loose_word %}
 
 # TODO: Find a way to handle words correctly
-word         -> (%NAME | %WORD)
+word         -> (%NUMBER | %NAME | %WORD)
                 {% (word) => combine('word', merge(...word)) %}
              |  string
                 {% id %}
@@ -353,6 +363,8 @@ word         -> (%NAME | %WORD)
              |  word op_word word
                 {% (word) => combine('word', merge(...word)) %}
              |  sub_word
+                {% one %}
+             |  js_word
                 {% one %}
 
 sub_word     -> %SUBSTITUTE empty list_body (_ list_term):? _ %RPAREN
@@ -366,8 +378,13 @@ sub_word     -> %SUBSTITUTE empty list_body (_ list_term):? _ %RPAREN
                   }
                 } %}
 
-# string       -> %DQUO (%DSTR):? %DQUO
-#                 {% (str) => string('dstr', ...str) %}
+js_word      -> %LJS empty (%JAVASCRIPT | string):* empty %RJS
+                {% ([,,parts,,]) => {
+                  const js_word = combine('js_word', merge(...parts));
+                  js_word.value = js_word.text;
+                  return js_word;
+                } %}
+
 string       -> dstr
              |  %SQUO (%SSTR):? %SQUO
                 {% (str) => string('sstr', ...str) %}
@@ -408,14 +425,27 @@ keyword      ->   %CASE   | %COPROC | %DO    | %DONE     | %ELIF | %ELSE
                 | %ESAC   | %FI     | %FOR   | %FUNCTION | %IF   | %IN
                 | %SELECT | %THEN   | %UNTIL | %WHILE    | %TIME
 
+redir        -> redir_ofile | redir_fd | redir_iofile
 
-redir        -> redir_ofile
-
-redir_ofile  -> %GREAT _ word
-                {% ([,,fname]) => ({
+redir_ofile  -> (%NUMBER):? %GREAT _ word
+                {% ([io,,,fname]) => ({
                   type: 'redir_ofile',
-                  io: 1,
+                  io: one(io) ? one(io).value : 1,
                   fname: one(fname),
+                }) %}
+
+redir_iofile -> %NUMBER %LESSGREAT _ word
+                {% ([io,,,fname]) => ({
+                  type: 'redir_iofile',
+                  io: one(io) ? one(io).value : 0,
+                  fname: one(fname),
+                }) %}
+
+redir_fd     -> (%NUMBER):? %GREATAND %NUMBER
+                {% ([io,,to]) => ({
+                  type: 'redir_fd',
+                  io: one(io) ? one(io).value : 1,
+                  to: one(to).value
                 }) %}
 
 newline      -> (%NL):+

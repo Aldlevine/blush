@@ -5,9 +5,9 @@ const path = require('path');
 
 module.exports = class Which extends Builtin
 {
-  constructor (name, args, opts, state)
+  constructor (name, args, ctx)
   {
-    super(name, args, opts, state);
+    super(name, args, ctx);
     const builtins = require('./index');
     const cmdopts = {
       all: false,
@@ -29,7 +29,7 @@ module.exports = class Which extends Builtin
         case '-w': cmdopts.commandType = true; break;
         default:
           if (arg.charAt(0) == '-') {
-            this._stderr.write(`which: bad option: ${arg}\n`);
+            this.stderr.write(`which: bad option: ${arg}\n`);
             exitCode = 1;
             break;
           }
@@ -41,12 +41,12 @@ module.exports = class Which extends Builtin
       for (let cmd of commands) {
         let aliasValue = alias.getAlias(cmd);
         if (aliasValue) {
-          this._stdout.write(`${cmd}: aliased to ${aliasValue}\n`);
+          this.stdout.write(`${cmd}: aliased to ${aliasValue}\n`);
 
           if (!cmdopts.all) continue;
         }
         if (cmd in builtins) {
-          this._stdout.write(`${cmd}: shell built-in command\n`);
+          this.stdout.write(`${cmd}: shell built-in command\n`);
 
           if (!cmdopts.all) continue;
         }
@@ -54,14 +54,14 @@ module.exports = class Which extends Builtin
         const result = glob.sync(pattern);
         if (result.length > 0) {
           if (cmdopts.all) {
-            result.map((p) => this._stdout.write(p+'\n'));
+            result.map((p) => this.stdout.write(p+'\n'));
           }
           else {
-            this._stdout.write(result[0]+'\n');
+            this.stdout.write(result[0]+'\n');
           }
         }
         else {
-          this._stderr.write(`${cmd} not found\n`);
+          this.stderr.write(`${cmd} not found\n`);
           exitCode = 1;
         }
       }

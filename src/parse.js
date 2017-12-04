@@ -12,13 +12,9 @@ const parse = module.exports = function parse (src)
 
   log('%O', ast);
 
-  if (ast.length == 0) {
-    return null;
-  }
+  if (ast.length == 0) { return null }
 
-  if (ast.length > 1) {
-    log('WARNING: ambiguity detected.')
-  }
+  if (ast.length > 1) { log('WARNING: ambiguity detected.') }
 
   return ast[0];
 }

@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 
+const Context = require('./context');
 const parseExitCode = require('./utils/parse-exit-code');
 const args = process.argv.slice(2);
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
 
 // TODO: Parse options.
 
@@ -27,14 +32,10 @@ for (let arg of args) {
     const parse = require('./parse');
     const {run} = require('./run');
     for (let file of files) {
-      // try {
-        await run(parse.file(file));
-        exitCode = 0;
-      // }
-      // catch (err) {
-      //   print.err(err);
-      //   exitCode = err;
-      // }
+      const ctx = new Context();
+      ctx.filename = file;
+      await run(parse.file(file), ctx);
+      exitCode = 0;
     }
     process.exit(parseExitCode(exitCode));
   }

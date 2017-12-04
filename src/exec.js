@@ -1,33 +1,39 @@
 const parse = require('./parse');
 const {run} = require('./run');
-const State = require('./state');
+const Context = require('./context');
 const {PassThrough} = require('stream');
 
-module.exports = async function exec (cmd, state=new State, ctx={})
+module.exports = async function exec (cmd, ctx = new Context())
 {
-  const pipe_stdout = new PassThrough;
+  const stdout = new PassThrough;
   let out = '';
 
-  return new Promise(async (res, rej) => {
-    pipe_stdout
-    .on('error', (err) => {
-      rej(err);
-    })
-    .on('data', (data) => {
-      out += data.toString();
-    })
-    .on('end', () => {
-      res(out);
-    });
+  const origStdout = ctx.stdio[1];
+  ctx.stdio[1] = stdout;
+
+  return await new Promise(async (res, rej) => {
+    // console.log(stdout);
+
+    stdout
+    .on('error', (err) => { rej(err) })
+    .on('data', (data) => { out += data.toString() })
+    .on('end', () => { res(out) });
 
     if (typeof cmd === 'string') {
-      cmd = parse(cmd+'\n');
+      try {
+        cmd = parse(cmd+'\n');
+      }
+      catch (err) {
+        return rej(err);
+      }
     }
 
     try {
-      await run(cmd, state, {pipe_stdout});
+      await run(cmd, ctx);
+      ctx.stdio[1] = origStdout;
     }
     catch (err) {
+      ctx.stdio[1] = origStdout;
       rej(err);
     }
   });

@@ -1,7 +1,0 @@
-#!/usr/bin/env blush
-
-# vim: set ft=sh:
-
-export A="TEST"
-
-echo $A;

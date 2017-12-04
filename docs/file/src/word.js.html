@@ -29,111 +29,154 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/state.js~State.html">State</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/context.js~Context.html">Context</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/io.js~IO.html">IO</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/state.js~State.html">State</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-exec">exec</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#builtins">builtins</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~alias.html">alias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~unalias.html">unalias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/builtin.js~Builtin.html">Builtin</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/cd.js~Cd.html">Cd</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/chalk.js~Chalk.html">Chalk</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/eval.js~Eval.html">Eval</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/exit.js~Exit.html">Exit</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/export.js~Export.html">Export</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/javascript.js~Javascript.html">Javascript</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/pwd.js~Pwd.html">Pwd</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/source.js~Source.html">Source</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/which.js~Which.html">Which</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-EventEmitter">EventEmitter</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#utils">utils</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/error.js~BlushError.html">BlushError</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/printer.js~Printer.html">Printer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-locateCommand">locateCommand</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parseExitCode">parseExitCode</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-readShebang">readShebang</a></span></span></li>
 </ul>
 </div>
 </nav>
 
 <div class="content" data-ice="content"><h1 data-ice="title">src/word.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const log = require(&apos;./utils/debug&apos;)(&apos;blush:word&apos;);
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const BlushError = require(&apos;./utils/error&apos;);
+const log = require(&apos;./utils/debug&apos;)(&apos;blush:word&apos;);
+const path = require(&apos;path&apos;);
 const os = require(&apos;os&apos;);
 
 const $ = exports;
 
-$.evaluate = async function evaluate (word, state, ctx)
+$.evaluate = async function evaluate (word, ctx)
 {
+  if (word instanceof Array) {
+    let result = &apos;&apos;;
+    for (let part of word) {
+      try { result += await $.evaluate(part, ctx) }
+      catch (err) { break }
+    }
+    return result;
+  }
+
   const type = word.type &amp;&amp; word.type.toLowerCase();
+
   if (!(type in $)) {
     return log(&apos;node type \&apos;%s\&apos; not implemented&apos;, word.type);
   }
-  return await $[type](word, state, ctx);
+  return await $[type](word, ctx);
 }
 
-$.word = async function word (word, state, ctx)
+$.word = async function word (word, ctx)
 {
-  return $.expand(word.value, state, ctx);
+  return $.expand(word.value, ctx);
 }
 
-$.dstr = async function string (word, state, ctx)
+$.dstr = async function string (word, ctx)
 {
   let out = &apos;&apos;;
-  for (let part of word.parts) {
-    out += await $.evaluate(part, state, ctx);
-  }
-  return await $.expand_env(out, state, ctx);
+  for (let part of word.parts) { out += await $.evaluate(part, ctx) }
+  return await $.expand_env(out, ctx);
 }
 
 $.dstr_string =
 $.sstr =
-$.estr = async function string (word, state, ctx)
+$.estr = async function string (word, ctx)
 {
   return word.value;
 }
 
-$.loose_word = async function loose_word (word, state, ctx)
+$.loose_word = async function loose_word (word, ctx)
 {
   let out = &apos;&apos;;
-  for (let part of word.parts) {
-    out += await $.evaluate(part, state, ctx);
-  }
+  for (let part of word.parts) { out += await $.evaluate(part, ctx) }
   return out;
-  // return word.parts.reduce(async (a, w) =&gt; a += await $.evaluate(w), &apos;&apos;);
 }
 
-$.dstr_sub_word = async function dstr_sub_word (word, state, ctx)
+$.dstr_sub_word = async function dstr_sub_word (word, ctx)
 {
   const exec = require(&apos;./exec&apos;);
-  state.save();
-  let out = await exec(word.list, state, ctx);
-  state.restore();
+  let out = await exec(word.list, ctx);
   return out.replace(/\s+$/, &apos;&apos;);
 }
 
-$.sub_word = async function sub_word (word, state, ctx)
+$.sub_word = async function sub_word (word, ctx)
 {
   const exec = require(&apos;./exec&apos;);
-  state.save();
-  let out = await exec(word.list, state, ctx);
-  state.restore();
+  let out = await exec(word.list, ctx);
   return out.replace(/\s+$/, &apos;&apos;).replace(/\s+/g, &apos; &apos;);
 }
 
-$.expand = async function (str, state, ctx)
+$.js_word = async function js_word (word, ctx)
 {
-  str = await $.expand_tilde(str, state, ctx);
-  str = await $.expand_env(str, state, ctx);
+  const {NodeVM} = require(&apos;vm2&apos;);
+  const dirname = typeof ctx.filename ===&apos;string&apos; ? path.dirname(ctx.filename) : ctx.cwd;
+  const vm = new NodeVM({
+    console: &apos;off&apos;,
+    sandbox: {},
+    require: {
+      external: true,
+      builtin: [&apos;*&apos;],
+      context: &apos;sandbox&apos;,
+    },
+    wrapper: &apos;none&apos;,
+  });
+
+  try {
+    // return vm.runInNewContext(await $.expand(word.value, ctx), {
+    //   __filename: ctx.filename,
+    //   __dirname: path.dirname(ctx.filename),
+    // }, {
+    //   filename: ctx.filename
+    // }).toString();
+    const result = (vm.run(await $.expand(word.value, ctx), ctx.filename))+&apos;&apos;;
+    return result;
+  }
+  catch (vmerr) {
+    const err = new BlushError(vmerr.message, {source: &apos;javascript&apos;, errno: 1});
+    err.stack = vmerr.stack;
+    throw err;
+  }
+}
+
+$.expand = async function (str, ctx)
+{
+  str = await $.expand_tilde(str, ctx);
+  str = await $.expand_env(str, ctx);
   return str;
 }
 
-$.expand_env = async function (str, state, ctx)
+$.expand_env = async function (str, ctx)
 {
   return str
-  .replace(/\$[a-zA-Z_][a-zA-Z0-9_]*/g, (match) =&gt; {
+  // .replace(/\$\?/g, () =&gt; ctx.exitCode)
+  .replace(/\$([a-zA-Z_][a-zA-Z0-9_]*|\?)/g, (match) =&gt; {
     const name = match.slice(1);
-    return process.env[name] || &apos;&apos;;
+    return name in ctx.env ? ctx.env[name] : &apos;&apos;;
   })
-  .replace(/\$\{[a-zA-Z_][a-zA-Z0-9_]*\}/g, (match) =&gt; {
+  .replace(/\$\{([a-zA-Z_][a-zA-Z0-9_]*|\?)\}/g, (match) =&gt; {
     const name = match.slice(2, -1);
-    return process.env[name] || &apos;&apos;;
+    return name in ctx.env ? ctx.env[name] : &apos;&apos;;
   });
 }
 
-$.expand_tilde = async function (str, state, ctx)
+$.expand_tilde = async function (str, ctx)
 {
   return str.replace(/^~/, os.homedir());
 }

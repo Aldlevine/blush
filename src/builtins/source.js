@@ -4,25 +4,23 @@ const parseExitCode = require('../utils/parse-exit-code');
 
 module.exports = class Source extends Builtin
 {
-  constructor (name, args, opts, state)
+  constructor (name, args, ctx)
   {
-    super(name, args, opts, state);
+    super(name, args, ctx);
 
     const {run} = require('../run');
 
-    let exitCode = 0;
-
     if (args.length == 0) {
-      this._stderr.write('source: not enough arguments\n');
+      this.stderr.write('source: not enough arguments\n');
       process.nextTick(() => this.emit('exit', 1));
     }
     else {
       let ast = parse.file(args[0]);
-      run(ast, state)
+      run(ast, ctx)
       .then(() => {
         process.nextTick(() => this.emit('exit', 0));
       }, (err) => {
-        process.nextTick(() => this.emit(err));
+        process.nextTick(() => this.emit('error', err));
       })
     }
 

@@ -94,11 +94,13 @@ function id(x) {return x[0]; }
       SUBSTITUTE: {match: '$(', push: 'main'},
       LPAREN: {match: '(', push: 'main'},
       RPAREN: {match: ')', pop: true},
+      LJS: {match: '{%', push: 'javascript'},
       LBRACE: '{',
       RBRACE: '}',
       LMATH: '[[',
       RMATH: ']]',
       EQ: '=',
+      NUMBER: /[0-9]+/,
       ASSIGN: /[a-zA-Z_][a-zA-Z0-9_]*=/,
       NAME: {
         match: /(?:[a-zA-Z_][a-zA-Z0-9_]*)(?=\s)/,
@@ -140,6 +142,14 @@ function id(x) {return x[0]; }
     sstring: {
       SSTR: { match: /[^'\n]+/, value: unescape },
       SQUO: { match: `'`, pop: true }
+    },
+    javascript: {
+      // EQUO: { match: `$'`, push: 'estring' },
+      DQUO: { match: `"`, push: 'dstring' },
+      SQUO: { match: `'`, push: 'sstring' },
+      RJS: { match: '%\}', pop: true },
+      JAVASCRIPT: { match: /(?:[^%"']|(?:%(?!\})))+/, lineBreaks: true},
+      // JAVASCRIPT: { match: /[^%"']+/, lineBreaks: true},
     }
   });
 var grammar = {
@@ -220,11 +230,12 @@ var grammar = {
               raw[i-1].pipe_stdout = true;
               raw[i+1].pipe_stdin = true;
               if (token.value.type === 'PIPEAND') {
-                raw[i-1].redir[2] = {
+                raw[i-1].redir = raw[i-1].redir || [];
+                raw[i-1].redir.push({
                   type: 'redir_fd',
                   io: 2,
                   to: 1
-                };
+                });
               }
             }
             else {
@@ -248,7 +259,6 @@ var grammar = {
         }) },
     {"name": "time", "symbols": [(lexer.has("TIME") ? {type: "TIME"} : TIME)], "postprocess":  ([time, bang]) => ({
           type: 'time',
-          // bang: !!one(bang),
         }) },
     {"name": "command$ebnf$1$subexpression$1$ebnf$1$subexpression$1", "symbols": ["redir", "_"]},
     {"name": "command$ebnf$1$subexpression$1$ebnf$1", "symbols": ["command$ebnf$1$subexpression$1$ebnf$1$subexpression$1"]},
@@ -284,7 +294,7 @@ var grammar = {
           }
           return {
             type: 'simple_cmd',
-            params: merge(assign),
+            params: merge(assign).map((p) => (p.local = true, p)),
             name,
             args,
             dot,
@@ -378,6 +388,7 @@ var grammar = {
     {"name": "strict_word$ebnf$1$subexpression$2", "symbols": ["word"]},
     {"name": "strict_word$ebnf$1", "symbols": ["strict_word$ebnf$1", "strict_word$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "strict_word", "symbols": ["strict_word$ebnf$1"], "postprocess": loose_word},
+    {"name": "word$subexpression$1", "symbols": [(lexer.has("NUMBER") ? {type: "NUMBER"} : NUMBER)]},
     {"name": "word$subexpression$1", "symbols": [(lexer.has("NAME") ? {type: "NAME"} : NAME)]},
     {"name": "word$subexpression$1", "symbols": [(lexer.has("WORD") ? {type: "WORD"} : WORD)]},
     {"name": "word", "symbols": ["word$subexpression$1"], "postprocess": (word) => combine('word', merge(...word))},
@@ -385,6 +396,7 @@ var grammar = {
     {"name": "word", "symbols": ["keyword_word", "word"], "postprocess": (word) => combine('word', merge(...word))},
     {"name": "word", "symbols": ["word", "op_word", "word"], "postprocess": (word) => combine('word', merge(...word))},
     {"name": "word", "symbols": ["sub_word"], "postprocess": one},
+    {"name": "word", "symbols": ["js_word"], "postprocess": one},
     {"name": "sub_word$ebnf$1$subexpression$1", "symbols": ["_", "list_term"]},
     {"name": "sub_word$ebnf$1", "symbols": ["sub_word$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "sub_word$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -396,6 +408,15 @@ var grammar = {
             type: 'sub_word',
             list,
           }
+        } },
+    {"name": "js_word$ebnf$1", "symbols": []},
+    {"name": "js_word$ebnf$1$subexpression$1", "symbols": [(lexer.has("JAVASCRIPT") ? {type: "JAVASCRIPT"} : JAVASCRIPT)]},
+    {"name": "js_word$ebnf$1$subexpression$1", "symbols": ["string"]},
+    {"name": "js_word$ebnf$1", "symbols": ["js_word$ebnf$1", "js_word$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "js_word", "symbols": [(lexer.has("LJS") ? {type: "LJS"} : LJS), "empty", "js_word$ebnf$1", "empty", (lexer.has("RJS") ? {type: "RJS"} : RJS)], "postprocess":  ([,,parts,,]) => {
+          const js_word = combine('js_word', merge(...parts));
+          js_word.value = js_word.text;
+          return js_word;
         } },
     {"name": "string", "symbols": ["dstr"]},
     {"name": "string$ebnf$1$subexpression$1", "symbols": [(lexer.has("SSTR") ? {type: "SSTR"} : SSTR)]},
@@ -456,10 +477,28 @@ var grammar = {
     {"name": "keyword", "symbols": [(lexer.has("WHILE") ? {type: "WHILE"} : WHILE)]},
     {"name": "keyword", "symbols": [(lexer.has("TIME") ? {type: "TIME"} : TIME)]},
     {"name": "redir", "symbols": ["redir_ofile"]},
-    {"name": "redir_ofile", "symbols": [(lexer.has("GREAT") ? {type: "GREAT"} : GREAT), "_", "word"], "postprocess":  ([,,fname]) => ({
+    {"name": "redir", "symbols": ["redir_fd"]},
+    {"name": "redir", "symbols": ["redir_iofile"]},
+    {"name": "redir_ofile$ebnf$1$subexpression$1", "symbols": [(lexer.has("NUMBER") ? {type: "NUMBER"} : NUMBER)]},
+    {"name": "redir_ofile$ebnf$1", "symbols": ["redir_ofile$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "redir_ofile$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "redir_ofile", "symbols": ["redir_ofile$ebnf$1", (lexer.has("GREAT") ? {type: "GREAT"} : GREAT), "_", "word"], "postprocess":  ([io,,,fname]) => ({
           type: 'redir_ofile',
-          io: 1,
+          io: one(io) ? one(io).value : 1,
           fname: one(fname),
+        }) },
+    {"name": "redir_iofile", "symbols": [(lexer.has("NUMBER") ? {type: "NUMBER"} : NUMBER), (lexer.has("LESSGREAT") ? {type: "LESSGREAT"} : LESSGREAT), "_", "word"], "postprocess":  ([io,,,fname]) => ({
+          type: 'redir_iofile',
+          io: one(io) ? one(io).value : 0,
+          fname: one(fname),
+        }) },
+    {"name": "redir_fd$ebnf$1$subexpression$1", "symbols": [(lexer.has("NUMBER") ? {type: "NUMBER"} : NUMBER)]},
+    {"name": "redir_fd$ebnf$1", "symbols": ["redir_fd$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "redir_fd$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "redir_fd", "symbols": ["redir_fd$ebnf$1", (lexer.has("GREATAND") ? {type: "GREATAND"} : GREATAND), (lexer.has("NUMBER") ? {type: "NUMBER"} : NUMBER)], "postprocess":  ([io,,to]) => ({
+          type: 'redir_fd',
+          io: one(io) ? one(io).value : 1,
+          to: one(to).value
         }) },
     {"name": "newline$ebnf$1$subexpression$1", "symbols": [(lexer.has("NL") ? {type: "NL"} : NL)]},
     {"name": "newline$ebnf$1", "symbols": ["newline$ebnf$1$subexpression$1"]},

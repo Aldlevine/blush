@@ -6,21 +6,33 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
-    "blush/src/builtins/alias.js~builtin",
-    "variable/index.html#static-variable-Builtin",
-    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/alias.js</span>",
-    "variable"
-  ],
-  [
     "blush/src/builtins/builtin.js~builtin",
     "class/src/builtins/builtin.js~Builtin.html",
     "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/builtin.js</span>",
     "class"
   ],
   [
+    "blush/src/builtins/exit.js~builtin",
+    "variable/index.html#static-variable-Builtin",
+    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/exit.js</span>",
+    "variable"
+  ],
+  [
     "blush/src/builtins/cd.js~cd",
     "class/src/builtins/cd.js~Cd.html",
     "<span>Cd</span> <span class=\"search-result-import-path\">blush/src/builtins/cd.js</span>",
+    "class"
+  ],
+  [
+    "blush/src/builtins/chalk.js~chalk",
+    "class/src/builtins/chalk.js~Chalk.html",
+    "<span>Chalk</span> <span class=\"search-result-import-path\">blush/src/builtins/chalk.js</span>",
+    "class"
+  ],
+  [
+    "blush/src/context.js~context",
+    "class/src/context.js~Context.html",
+    "<span>Context</span> <span class=\"search-result-import-path\">blush/src/context.js</span>",
     "class"
   ],
   [
@@ -45,6 +57,30 @@ window.esdocSearchIndex = [
     "blush/src/builtins/export.js~export",
     "class/src/builtins/export.js~Export.html",
     "<span>Export</span> <span class=\"search-result-import-path\">blush/src/builtins/export.js</span>",
+    "class"
+  ],
+  [
+    "blush/src/io.js~io",
+    "class/src/io.js~IO.html",
+    "<span>IO</span> <span class=\"search-result-import-path\">blush/src/io.js</span>",
+    "class"
+  ],
+  [
+    "blush/src/builtins/javascript.js~javascript",
+    "class/src/builtins/javascript.js~Javascript.html",
+    "<span>Javascript</span> <span class=\"search-result-import-path\">blush/src/builtins/javascript.js</span>",
+    "class"
+  ],
+  [
+    "blush/src/utils/printer.js~printer",
+    "class/src/utils/printer.js~Printer.html",
+    "<span>Printer</span> <span class=\"search-result-import-path\">blush/src/utils/printer.js</span>",
+    "class"
+  ],
+  [
+    "blush/src/builtins/pwd.js~pwd",
+    "class/src/builtins/pwd.js~Pwd.html",
+    "<span>Pwd</span> <span class=\"search-result-import-path\">blush/src/builtins/pwd.js</span>",
     "class"
   ],
   [
@@ -87,6 +123,12 @@ window.esdocSearchIndex = [
     "blush/src/utils/parse-exit-code.js~parseexitcode",
     "function/index.html#static-function-parseExitCode",
     "<span>parseExitCode</span> <span class=\"search-result-import-path\">blush/src/utils/parse-exit-code.js</span>",
+    "function"
+  ],
+  [
+    "blush/src/utils/read-shebang.js~readshebang",
+    "function/index.html#static-function-readShebang",
+    "<span>readShebang</span> <span class=\"search-result-import-path\">blush/src/utils/read-shebang.js</span>",
     "function"
   ],
   [
@@ -426,6 +468,18 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "src/builtins/builtin.js~builtin#error",
+    "class/src/builtins/builtin.js~Builtin.html#instance-method-error",
+    "src/builtins/builtin.js~Builtin#error",
+    "method"
+  ],
+  [
+    "src/builtins/builtin.js~builtin#exit",
+    "class/src/builtins/builtin.js~Builtin.html#instance-method-exit",
+    "src/builtins/builtin.js~Builtin#exit",
+    "method"
+  ],
+  [
     "src/builtins/builtin.js~builtin#stderr",
     "class/src/builtins/builtin.js~Builtin.html#instance-member-stderr",
     "src/builtins/builtin.js~Builtin#stderr",
@@ -453,6 +507,18 @@ window.esdocSearchIndex = [
     "src/builtins/cd.js~cd#constructor",
     "class/src/builtins/cd.js~Cd.html#instance-constructor-constructor",
     "src/builtins/cd.js~Cd#constructor",
+    "method"
+  ],
+  [
+    "src/builtins/chalk.js",
+    "file/src/builtins/chalk.js.html",
+    "src/builtins/chalk.js",
+    "file"
+  ],
+  [
+    "src/builtins/chalk.js~chalk#constructor",
+    "class/src/builtins/chalk.js~Chalk.html#instance-constructor-constructor",
+    "src/builtins/chalk.js~Chalk#constructor",
     "method"
   ],
   [
@@ -492,6 +558,30 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "src/builtins/javascript.js",
+    "file/src/builtins/javascript.js.html",
+    "src/builtins/javascript.js",
+    "file"
+  ],
+  [
+    "src/builtins/javascript.js~javascript#constructor",
+    "class/src/builtins/javascript.js~Javascript.html#instance-constructor-constructor",
+    "src/builtins/javascript.js~Javascript#constructor",
+    "method"
+  ],
+  [
+    "src/builtins/pwd.js",
+    "file/src/builtins/pwd.js.html",
+    "src/builtins/pwd.js",
+    "file"
+  ],
+  [
+    "src/builtins/pwd.js~pwd#constructor",
+    "class/src/builtins/pwd.js~Pwd.html#instance-constructor-constructor",
+    "src/builtins/pwd.js~Pwd#constructor",
+    "method"
+  ],
+  [
     "src/builtins/source.js",
     "file/src/builtins/source.js.html",
     "src/builtins/source.js",
@@ -516,6 +606,120 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "src/context.js",
+    "file/src/context.js.html",
+    "src/context.js",
+    "file"
+  ],
+  [
+    "src/context.js~context#clone",
+    "class/src/context.js~Context.html#instance-method-clone",
+    "src/context.js~Context#clone",
+    "method"
+  ],
+  [
+    "src/context.js~context#constructor",
+    "class/src/context.js~Context.html#instance-constructor-constructor",
+    "src/context.js~Context#constructor",
+    "method"
+  ],
+  [
+    "src/context.js~context#cwd",
+    "class/src/context.js~Context.html#instance-get-cwd",
+    "src/context.js~Context#cwd",
+    "member"
+  ],
+  [
+    "src/context.js~context#cwd",
+    "class/src/context.js~Context.html#instance-set-cwd",
+    "src/context.js~Context#cwd",
+    "member"
+  ],
+  [
+    "src/context.js~context#dirstack",
+    "class/src/context.js~Context.html#instance-get-dirstack",
+    "src/context.js~Context#dirstack",
+    "member"
+  ],
+  [
+    "src/context.js~context#dirstack",
+    "class/src/context.js~Context.html#instance-set-dirstack",
+    "src/context.js~Context#dirstack",
+    "member"
+  ],
+  [
+    "src/context.js~context#env",
+    "class/src/context.js~Context.html#instance-get-env",
+    "src/context.js~Context#env",
+    "member"
+  ],
+  [
+    "src/context.js~context#env",
+    "class/src/context.js~Context.html#instance-set-env",
+    "src/context.js~Context#env",
+    "member"
+  ],
+  [
+    "src/context.js~context#exitcode",
+    "class/src/context.js~Context.html#instance-get-exitCode",
+    "src/context.js~Context#exitCode",
+    "member"
+  ],
+  [
+    "src/context.js~context#exitcode",
+    "class/src/context.js~Context.html#instance-set-exitCode",
+    "src/context.js~Context#exitCode",
+    "member"
+  ],
+  [
+    "src/context.js~context#exports",
+    "class/src/context.js~Context.html#instance-get-exports",
+    "src/context.js~Context#exports",
+    "member"
+  ],
+  [
+    "src/context.js~context#exports",
+    "class/src/context.js~Context.html#instance-set-exports",
+    "src/context.js~Context#exports",
+    "member"
+  ],
+  [
+    "src/context.js~context#filename",
+    "class/src/context.js~Context.html#instance-member-filename",
+    "src/context.js~Context#filename",
+    "member"
+  ],
+  [
+    "src/context.js~context#generate",
+    "class/src/context.js~Context.html#instance-method-generate",
+    "src/context.js~Context#generate",
+    "method"
+  ],
+  [
+    "src/context.js~context#generateexportenv",
+    "class/src/context.js~Context.html#instance-method-generateExportEnv",
+    "src/context.js~Context#generateExportEnv",
+    "method"
+  ],
+  [
+    "src/context.js~context#parent",
+    "class/src/context.js~Context.html#instance-member-parent",
+    "src/context.js~Context#parent",
+    "member"
+  ],
+  [
+    "src/context.js~context#stdio",
+    "class/src/context.js~Context.html#instance-member-stdio",
+    "src/context.js~Context#stdio",
+    "member"
+  ],
+  [
+    "src/context.js~context#top",
+    "class/src/context.js~Context.html#instance-get-top",
+    "src/context.js~Context#top",
+    "member"
+  ],
+  [
     "src/exec.js",
     "file/src/exec.js.html",
     "src/exec.js",
@@ -526,6 +730,120 @@ window.esdocSearchIndex = [
     "file/src/index.js.html",
     "src/index.js",
     "file"
+  ],
+  [
+    "src/io.js",
+    "file/src/io.js.html",
+    "src/io.js",
+    "file"
+  ],
+  [
+    "src/io.js~io#[0]",
+    "class/src/io.js~IO.html#instance-member-[0]",
+    "src/io.js~IO#[0]",
+    "member"
+  ],
+  [
+    "src/io.js~io#[1]",
+    "class/src/io.js~IO.html#instance-member-[1]",
+    "src/io.js~IO#[1]",
+    "member"
+  ],
+  [
+    "src/io.js~io#[2]",
+    "class/src/io.js~IO.html#instance-member-[2]",
+    "src/io.js~IO#[2]",
+    "member"
+  ],
+  [
+    "src/io.js~io#[fd]",
+    "class/src/io.js~IO.html#instance-member-[fd]",
+    "src/io.js~IO#[fd]",
+    "member"
+  ],
+  [
+    "src/io.js~io#[from]",
+    "class/src/io.js~IO.html#instance-member-[from]",
+    "src/io.js~IO#[from]",
+    "member"
+  ],
+  [
+    "src/io.js~io#clone",
+    "class/src/io.js~IO.html#instance-method-clone",
+    "src/io.js~IO#clone",
+    "method"
+  ],
+  [
+    "src/io.js~io#close",
+    "class/src/io.js~IO.html#instance-method-close",
+    "src/io.js~IO#close",
+    "method"
+  ],
+  [
+    "src/io.js~io#constructor",
+    "class/src/io.js~IO.html#instance-constructor-constructor",
+    "src/io.js~IO#constructor",
+    "method"
+  ],
+  [
+    "src/io.js~io#length",
+    "class/src/io.js~IO.html#instance-member-length",
+    "src/io.js~IO#length",
+    "member"
+  ],
+  [
+    "src/io.js~io#openappend",
+    "class/src/io.js~IO.html#instance-method-openAppend",
+    "src/io.js~IO#openAppend",
+    "method"
+  ],
+  [
+    "src/io.js~io#openread",
+    "class/src/io.js~IO.html#instance-method-openRead",
+    "src/io.js~IO#openRead",
+    "method"
+  ],
+  [
+    "src/io.js~io#openreadwrite",
+    "class/src/io.js~IO.html#instance-method-openReadWrite",
+    "src/io.js~IO#openReadWrite",
+    "method"
+  ],
+  [
+    "src/io.js~io#opentrunc",
+    "class/src/io.js~IO.html#instance-method-openTrunc",
+    "src/io.js~IO#openTrunc",
+    "method"
+  ],
+  [
+    "src/io.js~io#openwrite",
+    "class/src/io.js~IO.html#instance-method-openWrite",
+    "src/io.js~IO#openWrite",
+    "method"
+  ],
+  [
+    "src/io.js~io#pause",
+    "class/src/io.js~IO.html#instance-method-pause",
+    "src/io.js~IO#pause",
+    "method"
+  ],
+  [
+    "src/io.js~io#redir",
+    "class/src/io.js~IO.html#instance-method-redir",
+    "src/io.js~IO#redir",
+    "method"
+  ],
+  [
+    "src/io.js~io#reset",
+    "class/src/io.js~IO.html#instance-method-reset",
+    "src/io.js~IO#reset",
+    "method"
+  ],
+  [
+    "src/io.js~io#resume",
+    "class/src/io.js~IO.html#instance-method-resume",
+    "src/io.js~IO#resume",
+    "method"
   ],
   [
     "src/run.js",
@@ -603,6 +921,84 @@ window.esdocSearchIndex = [
     "src/utils/parse-exit-code.js",
     "file/src/utils/parse-exit-code.js.html",
     "src/utils/parse-exit-code.js",
+    "file"
+  ],
+  [
+    "src/utils/printer.js",
+    "file/src/utils/printer.js.html",
+    "src/utils/printer.js",
+    "file"
+  ],
+  [
+    "src/utils/printer.js~printer#constructor",
+    "class/src/utils/printer.js~Printer.html#instance-constructor-constructor",
+    "src/utils/printer.js~Printer#constructor",
+    "method"
+  ],
+  [
+    "src/utils/printer.js~printer#err",
+    "class/src/utils/printer.js~Printer.html#instance-method-err",
+    "src/utils/printer.js~Printer#err",
+    "method"
+  ],
+  [
+    "src/utils/printer.js~printer#formaterr",
+    "class/src/utils/printer.js~Printer.html#instance-member-formatErr",
+    "src/utils/printer.js~Printer#formatErr",
+    "member"
+  ],
+  [
+    "src/utils/printer.js~printer#formatout",
+    "class/src/utils/printer.js~Printer.html#instance-member-formatOut",
+    "src/utils/printer.js~Printer#formatOut",
+    "member"
+  ],
+  [
+    "src/utils/printer.js~printer#out",
+    "class/src/utils/printer.js~Printer.html#instance-method-out",
+    "src/utils/printer.js~Printer#out",
+    "method"
+  ],
+  [
+    "src/utils/printer.js~printer#stdio",
+    "class/src/utils/printer.js~Printer.html#instance-member-stdio",
+    "src/utils/printer.js~Printer#stdio",
+    "member"
+  ],
+  [
+    "src/utils/printer.js~printer.err",
+    "class/src/utils/printer.js~Printer.html#static-method-err",
+    "src/utils/printer.js~Printer.err",
+    "method"
+  ],
+  [
+    "src/utils/printer.js~printer.formaterr",
+    "class/src/utils/printer.js~Printer.html#static-method-formatErr",
+    "src/utils/printer.js~Printer.formatErr",
+    "method"
+  ],
+  [
+    "src/utils/printer.js~printer.formatout",
+    "class/src/utils/printer.js~Printer.html#static-method-formatOut",
+    "src/utils/printer.js~Printer.formatOut",
+    "method"
+  ],
+  [
+    "src/utils/printer.js~printer.formatsystemerror",
+    "class/src/utils/printer.js~Printer.html#static-method-formatSystemError",
+    "src/utils/printer.js~Printer.formatSystemError",
+    "method"
+  ],
+  [
+    "src/utils/printer.js~printer.out",
+    "class/src/utils/printer.js~Printer.html#static-method-out",
+    "src/utils/printer.js~Printer.out",
+    "method"
+  ],
+  [
+    "src/utils/read-shebang.js",
+    "file/src/utils/read-shebang.js.html",
+    "src/utils/read-shebang.js",
     "file"
   ],
   [

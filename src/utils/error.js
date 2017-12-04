@@ -3,6 +3,8 @@ module.exports = class BlushError extends Error
   constructor (message, errno)
   {
     super(message);
-    this.errno = errno;
+
+    if (!isNaN(errno)) { this.errno = errno }
+    else { Object.assign(this, errno) }
   }
 }

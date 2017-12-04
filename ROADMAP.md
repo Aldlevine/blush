@@ -3,8 +3,7 @@
 - [ ] Support plugins
 - [ ] Run javascript directly using node's `vm` module
   - [ ] as a shell script
-  - [ ] as a javascript subshell
-  - _builtin?_
+  - [x] as a javascript subshell
 - [ ] Expose API to hosted scripts
 - [ ] Support custom prompt
 - [ ] Support custom readline
@@ -20,12 +19,15 @@
 ### Enhancements
 
 - [x] Normalize error handling / reporting
-- [ ] Normalize io redirection and piping
+- [x] Normalize io redirection and piping
+- [ ] Cleanup env / export process
 - [ ] Normalize subshell execution
 - [ ] Handle `cd`/`pushd`/`popd` manually (when using relative paths)
-- [ ] Include `pwd` builtin that uses the dirstack instead to the system's pwd
-- [ ] Combine command context and state
+- [ ] ~~Include `pwd` builtin that uses the dirstack instead to the system's pwd~~
+- [x] Combine command context and state
 - [ ] Syntax highlighting
+- [ ] Move all parse errors to the parse module. (Add recoverable flag to handle
+  unexpected end of input errors)
 
 
 ### Questionable enhancements
@@ -35,29 +37,37 @@
 
 ### Fixes
 
-- [ ] Fix word escaping (some sequences, like `\a` aren't handled)
+- [ ] Pipe should still make it lo `less` in this example: `ls | {true && less;}`
+- [ ] ~~Fix word escaping (some sequences, like `\a` aren't handled)~~
+- [ ] Make escaping follow bash rules instead of zsh rules.
+- [ ] Enable escaping of `$` character to prevent substitution
 - [ ] Make subshell substitution work with assignments
 
 
 ### Core
 
 - [x] Complete implementation of subshell
-- [x] Isolate state of scripts (like a subshell)
-  - Scripts should be required to `export` env vars
 - [ ] Complete redirection syntax / evaluation
-  - [x] Basic file redirection
+  - [x] Basic output file redirection
+  - [ ] Basic input file redirection
+  - [ ] Output file append redirection
+  - [ ] Clobber / No clobber
   - [x] Pipe and (`|&`)
-  - [ ] Fd redirection
+  - [x] Fd output redirection
+  - [ ] Fd input redirection
 - [ ] Complete implementation of all keywords / control operators
 - [ ] Support core bash arguments
 - [ ] Support applicable bash style env variables
 - [ ] Implement core builtins
   - [x] alias
-  - [x] cd
+  - [x] cd _Needs work_
+  - [x] dirs
+  - [x] pushd
+  - [x] popd
   - [x] exit
   - [x] source
   - [x] which
   - [x] export
-  - [ ] pushd
-  - [ ] popd
+  - [x] eval
+  - [ ] exec
   - ...

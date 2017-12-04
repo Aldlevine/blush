@@ -29,22 +29,29 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/state.js~State.html">State</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/context.js~Context.html">Context</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/io.js~IO.html">IO</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/state.js~State.html">State</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-exec">exec</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#builtins">builtins</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~alias.html">alias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~unalias.html">unalias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/builtin.js~Builtin.html">Builtin</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/cd.js~Cd.html">Cd</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/chalk.js~Chalk.html">Chalk</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/eval.js~Eval.html">Eval</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/exit.js~Exit.html">Exit</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/export.js~Export.html">Export</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/javascript.js~Javascript.html">Javascript</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/pwd.js~Pwd.html">Pwd</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/source.js~Source.html">Source</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/which.js~Which.html">Which</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-EventEmitter">EventEmitter</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#utils">utils</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/error.js~BlushError.html">BlushError</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/printer.js~Printer.html">Printer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-locateCommand">locateCommand</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parseExitCode">parseExitCode</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-readShebang">readShebang</a></span></span></li>
 </ul>
 </div>
 </nav>
@@ -52,34 +59,38 @@
 <div class="content" data-ice="content"><h1 data-ice="title">src/run.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const $ = exports;
 const locateCommand = require(&apos;./utils/locate-command&apos;);
+const readShebang = require(&apos;./utils/read-shebang&apos;);
 const parseExitCode = require(&apos;./utils/parse-exit-code&apos;);
-const print = require(&apos;./utils/print&apos;);
-const State = require(&apos;./state&apos;);
+const print = require(&apos;./utils/printer&apos;);
+const Context = require(&apos;./context&apos;);
+const BlushError = require(&apos;./utils/error&apos;);
+const parse = require(&apos;./parse&apos;);
 const builtins = require(&apos;./builtins&apos;);
 const log = require(&apos;./utils/debug&apos;)(&apos;blush:run&apos;);
 const {PassThrough} = require(&apos;stream&apos;);
 const {spawn} = require(&apos;child_process&apos;);
+const {Socket} = require(&apos;net&apos;);
 const fs = require(&apos;fs&apos;);
 
-$.run = async function (...args)
+$.run = async function (node, ctx = new Context())
 {
   try {
-    await $.evaluate(...args);
+    await $.evaluate(node, ctx)
+    return 0;
   }
   catch (err) {
     log(err);
-    print.err(err);
+    print.err(ctx, err);
     return parseExitCode(err);
   }
-
-  return 0;
 }
 
-$.evaluate = async function (node, state=new State, ctx={})
+$.evaluate = async function (node, ctx)
 {
   if (node instanceof Array) {
     for (let node of node) {
-      await $.evaluate(node, state, ctx);
+      try { await $.evaluate(node, ctx) }
+      catch (err) { break }
     }
     return;
   }
@@ -88,124 +99,151 @@ $.evaluate = async function (node, state=new State, ctx={})
     return log(&apos;node type \&apos;%s\&apos; not implemented&apos;, node &amp;&amp; node.type || node);
   }
 
-  return await $[node.type](node, state, ctx);
+  return await $[node.type](node, ctx);
 }
 
-$.program = async function (node, state, ctx)
+$.program = async function (node, ctx)
 {
   log(&apos;evaluate program&apos;);
   const {body} = node;
-  return body &amp;&amp; await $.evaluate(body, state, ctx);
+  return body &amp;&amp; await $.evaluate(body, ctx);
 }
 
-$.list = async function (node, state, ctx)
+$.list = async function (node, ctx)
 {
   log(&apos;evaluate list&apos;);
   const {commands} = node;
-  const {pipe_stdin, pipe_stdout} = ctx;
 
   let exitCode = 0;
 
   for (let i=0, ii=commands.length; i&lt;ii; i++) {
     const cmd = commands[i];
-    const cmd_ctx = {};
-    const modifier = cmd.modifier &amp;&amp; await $.evaluate(cmd.modifier);
+
+    if (cmd.type === &apos;assign&apos;) {
+      await $.evaluate(cmd, ctx);
+      continue;
+    }
+
+    const cmd_ctx = ctx.clone();
+    const modifier = cmd.modifier &amp;&amp; await $.evaluate(cmd.modifier, cmd_ctx);
 
     log(&apos;modifier: %s; exit-code: %d&apos;, modifier, exitCode);
-    if (modifier == &apos;and&apos; &amp;&amp; !!exitCode) {
-      continue;
-    }
-    if (modifier == &apos;or&apos; &amp;&amp; !exitCode) {
-      continue;
-    }
+    if (modifier == &apos;and&apos; &amp;&amp; !!exitCode) { continue }
+    if (modifier == &apos;or&apos; &amp;&amp; !exitCode) { continue }
 
-    if (pipe_stdin) {
-      cmd_ctx.pipe_stdin = pipe_stdin;
-    }
+    let stdout = cmd_ctx.stdio[1];
+    if (stdout &amp;&amp; stdout.fd !== 1) {
+      cmd_ctx.stdio[1] = new PassThrough;
 
-    if (pipe_stdout) {
-      cmd_ctx.pipe_stdout = new PassThrough;
-      cmd_ctx.pipe_stdout
+      cmd_ctx.stdio[1]
       .on(&apos;data&apos;, (data) =&gt; {
-        pipe_stdout.write(data);
-      })
-      .on(&apos;error&apos;, (err) =&gt; {
-      })
+        stdout.write(data);
+      });
+    }
+
+    if (ctx.requestInputStream) {
+      cmd_ctx.requestInputStream = ctx.requestInputStream;
+      ctx.requestInputStream = &apos;ignore&apos;;
     }
 
     try {
-      await $.evaluate(cmd, state, cmd_ctx);
-      exitCode = 0;
+      await $.evaluate(cmd, cmd_ctx);
+      ctx.exitCode = exitCode = 0;
     }
     catch (err) {
-      log(&apos;command errored %O&apos;, err);
       exitCode = err;
+      ctx.exitCode = parseExitCode(err);
     }
   }
 
-  if (pipe_stdout) {
-    pipe_stdout.end();
+  // TODO: Working on piping into a list. Probably need to switch from &apos;pipe&apos;
+  // to &apos;ignore&apos; when &apos;end&apos; is received on the piping command&apos;s stdout.
+
+  if (ctx.stdio[1] &amp;&amp; ctx.stdio[1].end &amp;&amp; (!(&apos;fd&apos; in ctx.stdio[1]) || ctx.stdio[1].fd &gt; 2)) {
+    ctx.stdio[1].end();
   }
 
-  if (exitCode !== 0) {
-    throw exitCode;
-  }
+  if (exitCode !== 0) { throw exitCode }
 }
 
 const NS_PER_SEC = 1e9;
 const US_PER_SEC = 1e6;
 const MS_PER_SEC = 1e3;
 
-$.pipeline = async function (node, state, ctx)
+$.pipeline = async function (node, ctx)
 {
   log(&apos;evaluate pipeline&apos;);
 
-  const promises = [];
   const {commands, time, negate} = node;
-  const {pipe_stdin, pipe_stdout, redir} = ctx;
 
-  const streams = [];
-  let stream = null;
   let exitCode = 0;
 
   let start;
-  if (time) {
-    start = process.hrtime();
-  }
+  if (time) { start = process.hrtime() }
 
-  for (let i=0, ii=commands.length; i&lt;ii; i++) {
-    const cmd_ctx = {};
-    const cmd = commands[i];
+  const promises = [];
+  const pipeline = commands.slice().reverse();
+  let cmd, stream;
 
-    if (i == 0) cmd_ctx.pipe_stdin = pipe_stdin;
-    else cmd_ctx.pipe_stdin = stream;
+  while (cmd = pipeline.shift()) {
+    try {
+      await new Promise(async (res, rej) =&gt; {
+        const cmd_ctx = ctx.clone();
 
-    if (i == ii-1) cmd_ctx.pipe_stdout = pipe_stdout;
-    else streams.push(cmd_ctx.pipe_stdout = stream = new PassThrough);
+        if (stream) { cmd_ctx.stdio[1] = stream }
 
-    cmd_ctx.redir = redir;
+        if (pipeline.length) cmd_ctx.requestInputStream = (err, str) =&gt; {
+          if (err) return rej(err);
+          stream = str;
+          res();
+        }
+        else if (ctx.requestInputStream) {
+          cmd_ctx.requestInputStream = ctx.requestInputStream;
+        }
 
-    promises.push($.evaluate(cmd, state, cmd_ctx).catch((err) =&gt; {
-      cmd_ctx.pipe_stdin &amp;&amp; cmd_ctx.pipe_stdin.end();
-      cmd_ctx.pipe_stdout &amp;&amp; cmd_ctx.pipe_stdout.end();
-      exitCode = err;
-    }));
+        // Redirs here?
+        if (cmd.redir) {
+          for (let r of cmd.redir) {
+            try {
+              await $.evaluate(r, cmd_ctx)
+              if (r.io == 1 &amp;&amp; stream) process.nextTick(() =&gt; stream.end())
+            }
+            catch (err) {
+              print.err(ctx, err);
+              stream &amp;&amp; stream.end();
+              return rej(err);
+            }
+          }
+        }
+
+        try {
+          promises.push($.evaluate(cmd, cmd_ctx).catch((err) =&gt; {
+            stream &amp;&amp; stream.end();
+            exitCode = err;
+          }));
+        }
+        catch (err) {
+          stream &amp;&amp; stream.end();
+          return rej(err)
+        }
+
+        if (pipeline.length == 0) { res() }
+      });
+    }
+    catch (err) { break }
   }
 
   try {
     await Promise.all(promises);
-    if (negate) {
-      exitCode = 1;
-    }
+    if (negate) { ctx.exitCode = exitCode = 1 }
   }
   catch (err) {
     // for (let stream of streams) {
     //   stream.end();
     // }
-    if (negate) {
-      exitCode = 0;
-    }
+    if (negate) { ctx.exitCode = exitCode = 0 }
     else {
+      ctx.exitCode = parseExitCode(err);
       exitCode = err;
     }
   }
@@ -226,229 +264,192 @@ $.pipeline = async function (node, state, ctx)
       time /= NS_PER_SEC/US_PER_SEC;
       unit = &apos;us&apos;;
     }
-    print(`${time.toFixed(2)}${unit}`);
+    print.out(ctx, `${time.toFixed(2)}${unit}`);
   }
 
-  if (exitCode !== 0) {
-    throw exitCode;
-  }
+  if (exitCode !== 0) { throw exitCode }
 }
 
-/**
- * TODO: restore stdin if not consumed
- */
-$.simple_cmd = async function (node, state, ctx)
+
+$.simple_cmd = async function (node, ctx)
 {
-  let name = origName = await $.word(node.name, state, ctx);
+  let name = origName = await $.word(node.name, ctx);
   let args = [];
   for (let arg of node.args) {
-    args.push(await $.word(arg, state, ctx));
+    args.push(await $.word(arg, ctx));
+  }
+
+  const exports = [];
+  if (node.params) {
+    for (let p of node.params) {
+      exports.push(p.name);
+      await $.evaluate(p, ctx);
+    }
   }
 
   log(&apos;evaluate simple_cmd &quot;%s&quot;&apos;, name);
 
-  const stdio = [0,1,2];
-  ctx.stdio = ctx.stdio || [];
+  if (typeof ctx.requestInputStream === &apos;function&apos;) { ctx.stdio[0] = &apos;pipe&apos; }
+  else if (ctx.requestInputStream === &apos;ignore&apos;) { ctx.stdio[0] = &apos;pipe&apos; }
 
-  if (ctx.pipe_stdin) {
-    log(&apos;pipe into &quot;%s&quot;&apos;, name);
-    stdio[0] = &apos;pipe&apos;;
-    ctx.stdio[0] = ctx.pipe_stdin;
-  }
+  const stdout = ctx.stdio[1];
+  if (isNaN(stdout.fd)) { ctx.stdio[1] = &apos;pipe&apos; }
 
-  if (ctx.pipe_stdout) {
-    log(&apos;pipe out of &quot;%s&quot;&apos;, name);
-    stdio[1] = &apos;pipe&apos;;
-    ctx.stdio[1] = ctx.pipe_stdout;
-  }
-
-  const redirs = {};
-  for (let r of node.redir) {
-    if (!r) continue;
-    const {type, io, stream, to} = await $.evaluate(r);
-
-    redirs[io] = redirs[io] || [];
-
-    stdio[io] = &apos;pipe&apos;;
-    if (type === &apos;fd&apos;) {
-      redirs[io].push(to);
-    }
-    else {
-      redirs[io].push(stream);
-    }
-  }
-
-  state.save();
-  await new Promise((res, rej) =&gt; {
+  await new Promise(async (res, rej) =&gt; {
     let proc;
     let alias = builtins.alias.getAlias(name);
+
     if (alias) {
       let [aliasName, ...aliasArgs] = alias.split(&apos; &apos;);
       name = aliasName;
       args = [...aliasArgs, ...args];
     }
+
     if (name in builtins) {
-      proc = new builtins[name](name, args, {stdio, argv0: origName}, state);
+      proc = new builtins[name](name, args, ctx);
     }
     else {
       let cmdpath;
 
-      cmdpath = locateCommand(name, node.dot);
-
-      proc = spawn(cmdpath, args, {stdio, argv0: origName, env: state.env});
-    }
-
-    if (ctx.pipe_stdin) {
-      if (ctx.pipe_stdin.readable) {
-        ctx.pipe_stdin
-        .on(&apos;data&apos;, (data) =&gt; {
-          if (proc.stdin.writable) {
-            proc.stdin.write(data);
-          }
-        })
-        .on(&apos;end&apos;, () =&gt; {
-          proc.stdin.end();
-        })
-        .on(&apos;error&apos;, (err) =&gt; {
-          proc.stdin.end();
-          rej(err);
-        })
-
-        proc.stdin
-        .on(&apos;error&apos;, (err) =&gt; {
-          rej(err);
-        })
+      try {
+        cmdpath = locateCommand(name, node.dot, ctx.clone({env: process.env}));
       }
-      else {
-        proc.stdin.end();
+      catch (err) {
+        err.source = origName;
+        print.err(ctx, err);
+        if (ctx.requestInputStream) {
+          ctx.requestInputStream(err);
+        }
+        return rej(err);
       }
+
+      // This is here to speed up running blush scripts {{{
+      const shebang = await readShebang(cmdpath);
+      if (/(^|\s|\/)blush$/.test(shebang)) {
+        const src = fs.readFileSync(cmdpath, &apos;utf-8&apos;);
+        try {
+          const ast = parse(src);
+          if (!ast) {
+            return rej(new BlushError(&apos;invalid syntax:\n\nUnexpected end of input\n&apos;, {errno: 1, source: name}));
+          }
+          ctx.stdio[1] = stdout;
+          ctx.filename = cmdpath;
+          return res(await $.evaluate(ast, ctx.clone({subshell: true, exports})));
+        }
+        catch (err) {
+          return rej(err);
+        }
+      }
+      // }}}
+
+      ctx.argv0 = origName;
+      proc = spawn(cmdpath, args, ctx.generate(exports));
     }
 
-    for (let io in redirs) {
-      proc.stdio[io]
-      .on(&apos;data&apos;, (data) =&gt; {
-        for (let stream of redirs[io]) {
-          if (!isNaN(stream)) {
-            ctx.stdio[stream].write(data);
-          };
-          if (stream &amp;&amp; stream.writable) {
-            stream.write(data);
-          }
-        }
-      })
-      .on(&apos;end&apos;, () =&gt; {
-        for (let stream of redirs[io]) {
-          if (!isNaN(stream)) continue;
-          if (stream &amp;&amp; stream.writable) {
-            stream.end();
-          }
-        }
-      })
-      .on(&apos;error&apos;, (err) =&gt; {
-        for (let stream of redirs[io]) {
-          if (stream &amp;&amp; isNaN(stream)) continue;
-          proc.stdio[stream].end();
-        }
+    if (typeof ctx.requestInputStream === &apos;function&apos;) {
+      ctx.requestInputStream(null, proc.stdio[0]);
+      proc.stdin.on(&apos;error&apos;, (err) =&gt; {
+        err.source = origName;
+        print.err(ctx, err)
+        rej(err);
       })
     }
+    else if (ctx.requestInputStream === &apos;ignore&apos;) {
+      proc.stdin.end();
+    }
 
-    if (ctx.pipe_stdout) {
+    if (ctx.stdio[1] === &apos;pipe&apos;) {
       proc.stdout
       .on(&apos;data&apos;, (data) =&gt; {
-        ctx.pipe_stdout.write(data);
+        stdout.write(data.toString());
       })
       .on(&apos;end&apos;, () =&gt; {
-        ctx.pipe_stdout.end();
+        if (!stdout.isTTY) { stdout.end() }
       })
       .on(&apos;error&apos;, (err) =&gt; {
-        ctx.pipe_stdout.end();
-        rej(err);
+        err.source = origName;
+        if (!stdout.isTTY) { stdout.end(err) }
       })
     }
 
     proc
     .on(&apos;exit&apos;, (code, signal) =&gt; {
-      log(&apos;exit &quot;%s&quot;&apos;, origName);
-      if (code || signal) return rej(code || signal);
+      log(&apos;exit &quot;%s&quot;&apos;, name);
+      if (code || signal) { return rej(code || signal) }
       res();
     })
     .on(&apos;error&apos;, (err) =&gt; {
+      log(&apos;error &quot;%s&quot;&apos;, name);
+      err.source = origName;
+      print.err(ctx, err);
       rej(err);
     })
   });
-  state.restore();
 }
 
-$.group_cmd = async function (node, state, ctx)
+$.group_cmd = async function (node, ctx)
 {
   log(&apos;evaluate group_cmd&apos;);
-  return await $.evaluate(node.list, state, ctx);
+  return await $.evaluate(node.list, ctx);
 }
 
-$.if_cmd = async function (node, state, ctx)
+$.if_cmd = async function (node, ctx)
 {
   log(&apos;evaluate if_cmd&apos;);
-  // let exitCode = 0;
 
-  await $.evaluate(node.if, state, ctx)
+  await $.evaluate(node.if, ctx)
   .then(async () =&gt; {
-    // try {
-      await $.evaluate(node.then, state, ctx);
-    // }
-    // catch (err) { exitCode = err }
+    await $.evaluate(node.then, ctx);
   })
   .catch(async (err) =&gt; {
-    // try {
-      await $.evaluate(node.else, state, ctx);
-    // }
-    // catch (err) { exitCode = err }
+    await $.evaluate(node.else, ctx);
   })
-
-  // if (exitCode !== 0) {
-  //   throw exitCode;
-  // }
 }
 
-$.subshell_cmd = async function (node, state, ctx)
+$.subshell_cmd = async function (node, ctx)
 {
   log(&apos;evaluate subshell_cmd&apos;);
-  state.save();
-  await $.evaluate(node.list, state, ctx);
-  state.restore();
+  await $.evaluate(node.list, ctx.clone({subshell: true}));
 }
 
-$.redir_ofile = async function (node, state, ctx)
+$.redir_ofile = async function (node, ctx)
 {
   log(&apos;evaluate redir_ofile&apos;);
-  const fname = await $.word(node.fname, state, ctx);
-  return {type: &apos;file&apos;, io: node.io, stream: fs.createWriteStream(fname)};
+  const fname = await $.word(node.fname, ctx);
+  ctx.stdio.openTrunc(fname, node.io);
 }
 
-$.redir_fd = async function (node, state, ctx)
+$.redir_iofile = async function (node, ctx)
+{
+  log(&apos;evaluate redir_iofile&apos;);
+  const fname = await $.word(node.fname, ctx);
+  ctx.stdio.openReadWrite(fname, node.io);
+}
+
+$.redir_fd = async function (node, ctx)
 {
   log(&apos;evaluate redir_fd&apos;);
-  return {type: &apos;fd&apos;, io: node.io, to: node.to};
+  ctx.stdio.redir(node.io, node.to);
 }
 
-$.assign = async function (node, state, ctx)
+$.assign = async function (node, ctx)
 {
   log(&apos;evaluate assign&apos;);
   const {name, value} = node;
+  const env = node.local ? ctx.env : ctx.top.env;
   if (value) {
-    let res = await $.word(value, state, ctx);
-    process.env[name] = res;
+    let res = await $.word(value, ctx);
+    env[name] = res;
   }
-  else {
-    delete process.env[name];
-  }
+  else { delete env[name] }
 }
 
-$.AND = function (node, state, ctx)
+$.AND = function (node, ctx)
 {
   return &apos;and&apos;;
 }
 
-$.OR = function (node, state, ctx)
+$.OR = function (node, ctx)
 {
   return &apos;or&apos;;
 }

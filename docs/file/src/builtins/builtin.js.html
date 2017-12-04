@@ -29,59 +29,71 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/state.js~State.html">State</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/context.js~Context.html">Context</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/io.js~IO.html">IO</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/state.js~State.html">State</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-exec">exec</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#builtins">builtins</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~alias.html">alias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~unalias.html">unalias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/builtin.js~Builtin.html">Builtin</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/cd.js~Cd.html">Cd</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/chalk.js~Chalk.html">Chalk</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/eval.js~Eval.html">Eval</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/exit.js~Exit.html">Exit</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/export.js~Export.html">Export</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/javascript.js~Javascript.html">Javascript</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/pwd.js~Pwd.html">Pwd</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/source.js~Source.html">Source</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/which.js~Which.html">Which</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-EventEmitter">EventEmitter</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#utils">utils</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/error.js~BlushError.html">BlushError</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/printer.js~Printer.html">Printer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-locateCommand">locateCommand</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parseExitCode">parseExitCode</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-readShebang">readShebang</a></span></span></li>
 </ul>
 </div>
 </nav>
 
 <div class="content" data-ice="content"><h1 data-ice="title">src/builtins/builtin.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const EventEmitter = require(&apos;events&apos;);
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const IO = require(&apos;../io&apos;);
+const EventEmitter = require(&apos;events&apos;);
 const {PassThrough} = require(&apos;stream&apos;);
 
 module.exports = class Builtin extends EventEmitter
 {
-  constructor (name, args, opts, state)
+  constructor (name, args, ctx)
   {
     super();
     Object.assign(this, {
       cwd: process.cwd(),
       env: process.env,
-      stdio: [&apos;pipe&apos;,&apos;pipe&apos;,&apos;pipe&apos;]
-    }, opts);
+      stdio: new IO,
+    }, ctx.clone());
 
-    this.stdio[0] = this.stdin = this.stdio[0] == &apos;pipe&apos; ?
-      new PassThrough() : null;
+    this.stdin = this.stdio[0] =
+    this.stdio[0] == &apos;pipe&apos; ? new PassThrough() : this.stdio[0];
 
-    this.stdio[1] = this.stdout = this.stdio[1] == &apos;pipe&apos; ?
-      new PassThrough() : null;
+    this.stdout = this.stdio[1] =
+    this.stdio[1] == &apos;pipe&apos; ? new PassThrough() : this.stdio[1];
 
-    this.stdio[2] = this.stderr = this.stdio[2] == &apos;pipe&apos; ?
-      new PassThrough() : null;
+    this.stderr = this.stdio[2] =
+    this.stdio[2] == &apos;pipe&apos; ? new PassThrough() : this.stdio[2];
+  }
 
-    this._stdin = this.stdin || process.stdin;
-    this._stdout = this.stdout || process.stdout;
-    this._stderr = this.stderr || process.stderr;
+  exit (result)
+  {
+    this.stdout &amp;&amp; !this.stdout.isTTY &amp;&amp; this.stdout.end();
+    this.stderr &amp;&amp; !this.stderr.isTTY &amp;&amp; this.stderr.end();
+    process.nextTick(() =&gt; this.emit(&apos;exit&apos;, result));
+  }
 
-    this.on(&apos;exit&apos;, () =&gt; {
-      this.stdin &amp;&amp; this.stdin.end();
-      this.stdout &amp;&amp; this.stdout.end();
-      this.stderr &amp;&amp; this.stderr.end();
-    });
+  error (err)
+  {
+    this.stdout &amp;&amp; !this.stdout.isTTY &amp;&amp; this.stdout.end();
+    this.stderr &amp;&amp; !this.stderr.isTTY &amp;&amp; this.stderr.end();
+    process.nextTick(() =&gt; this.emit(&apos;error&apos;, err));
   }
 }
 </code></pre>

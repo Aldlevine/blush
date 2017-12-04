@@ -1,7 +1,7 @@
 {
-  "coverage": "0.89%",
-  "expectCount": 112,
-  "actualCount": 1,
+  "coverage": "0%",
+  "expectCount": 205,
+  "actualCount": 0,
   "files": {
     "src/builtins/alias.js": {
       "expectCount": 9,
@@ -11,11 +11,11 @@
         3,
         5,
         7,
-        39,
-        44,
-        49,
-        60,
-        62
+        35,
+        40,
+        45,
+        54,
+        56
       ]
     },
     "src/builtins/builtin.js": {
@@ -24,14 +24,14 @@
       "undocumentLines": [
         1,
         2,
-        4,
-        6,
-        24,
-        25,
+        3,
+        5,
+        7,
+        16,
+        19,
+        22,
         26,
-        29,
-        30,
-        31
+        33
       ]
     },
     "src/builtins/cd.js": {
@@ -42,6 +42,15 @@
         2,
         4,
         6
+      ]
+    },
+    "src/builtins/chalk.js": {
+      "expectCount": 3,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3,
+        5
       ]
     },
     "src/builtins/eval.js": {
@@ -73,6 +82,27 @@
         6
       ]
     },
+    "src/builtins/javascript.js": {
+      "expectCount": 4,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        4,
+        6
+      ]
+    },
+    "src/builtins/pwd.js": {
+      "expectCount": 5,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        3,
+        5,
+        7
+      ]
+    },
     "src/builtins/source.js": {
       "expectCount": 5,
       "actualCount": 0,
@@ -96,6 +126,36 @@
         8
       ]
     },
+    "src/context.js": {
+      "expectCount": 24,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3,
+        5,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        24,
+        38,
+        47,
+        55,
+        64,
+        65,
+        67,
+        68,
+        70,
+        71,
+        73,
+        74,
+        76,
+        77
+      ]
+    },
     "src/exec.js": {
       "expectCount": 5,
       "actualCount": 0,
@@ -108,18 +168,56 @@
       ]
     },
     "src/index.js": {
-      "expectCount": 4,
+      "expectCount": 5,
       "actualCount": 0,
       "undocumentLines": [
         3,
         4,
-        8,
-        11
+        5,
+        13,
+        16
+      ]
+    },
+    "src/io.js": {
+      "expectCount": 31,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        3,
+        5,
+        7,
+        10,
+        11,
+        12,
+        15,
+        20,
+        25,
+        31,
+        33,
+        44,
+        51,
+        58,
+        63,
+        64,
+        65,
+        66,
+        69,
+        74,
+        86,
+        89,
+        102,
+        107,
+        112,
+        117,
+        122,
+        129,
+        135
       ]
     },
     "src/run.js": {
-      "expectCount": 27,
-      "actualCount": 1,
+      "expectCount": 32,
+      "actualCount": 0,
       "undocumentLines": [
         1,
         2,
@@ -131,22 +229,28 @@
         8,
         9,
         10,
+        11,
         12,
-        26,
-        42,
-        49,
-        103,
-        104,
-        105,
-        107,
-        330,
-        336,
-        360,
-        368,
-        375,
-        381,
-        394,
-        399
+        13,
+        14,
+        16,
+        29,
+        46,
+        53,
+        110,
+        111,
+        112,
+        114,
+        215,
+        331,
+        337,
+        350,
+        356,
+        363,
+        370,
+        376,
+        388,
+        393
       ]
     },
     "src/state.js": {
@@ -169,7 +273,7 @@
       "undocumentLines": [
         1,
         3,
-        6
+        7
       ]
     },
     "src/utils/locate-command.js": {
@@ -192,22 +296,54 @@
         3
       ]
     },
-    "src/word.js": {
-      "expectCount": 12,
+    "src/utils/printer.js": {
+      "expectCount": 15,
       "actualCount": 0,
       "undocumentLines": [
         1,
         2,
+        3,
+        5,
+        7,
+        13,
+        14,
+        15,
+        18,
+        23,
+        28,
+        36,
+        44,
+        52,
+        71
+      ]
+    },
+    "src/utils/read-shebang.js": {
+      "expectCount": 2,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        3
+      ]
+    },
+    "src/word.js": {
+      "expectCount": 15,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        3,
         4,
         6,
-        15,
-        20,
-        36,
+        8,
+        27,
+        32,
         46,
-        55,
-        64,
-        71,
-        84
+        53,
+        60,
+        67,
+        99,
+        106,
+        120
       ]
     }
   }
