@@ -1,6 +1,6 @@
 {
   "coverage": "0%",
-  "expectCount": 205,
+  "expectCount": 194,
   "actualCount": 0,
   "files": {
     "src/builtins/alias.js": {
@@ -32,16 +32,6 @@
         22,
         26,
         33
-      ]
-    },
-    "src/builtins/cd.js": {
-      "expectCount": 4,
-      "actualCount": 0,
-      "undocumentLines": [
-        1,
-        2,
-        4,
-        6
       ]
     },
     "src/builtins/chalk.js": {
@@ -216,7 +206,7 @@
       ]
     },
     "src/run.js": {
-      "expectCount": 32,
+      "expectCount": 33,
       "actualCount": 0,
       "undocumentLines": [
         1,
@@ -233,38 +223,25 @@
         12,
         13,
         14,
-        16,
-        29,
-        46,
-        53,
-        110,
+        15,
+        17,
+        30,
+        47,
+        54,
         111,
         112,
-        114,
-        215,
-        331,
-        337,
-        350,
-        356,
-        363,
-        370,
-        376,
-        388,
-        393
-      ]
-    },
-    "src/state.js": {
-      "expectCount": 8,
-      "actualCount": 0,
-      "undocumentLines": [
-        1,
-        3,
-        5,
-        10,
-        11,
-        13,
-        16,
-        25
+        113,
+        115,
+        216,
+        340,
+        346,
+        359,
+        377,
+        384,
+        391,
+        397,
+        409,
+        414
       ]
     },
     "src/utils/error.js": {
@@ -341,9 +318,9 @@
         53,
         60,
         67,
-        99,
-        106,
-        120
+        130,
+        137,
+        151
       ]
     }
   }

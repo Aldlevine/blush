@@ -90,7 +90,7 @@ const REPL = module.exports = class REPL
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      completer: this.completer,
+      completer: (line, callback) => this.completer(line, callback),
       prompt: await this.renderPrompt(),
     });
 
@@ -153,16 +153,19 @@ const REPL = module.exports = class REPL
   /** Lame completer */
   completer (line, callback)
   {
-    if (/\s*\.\//.test(line)) {
-      // search cwd
-      glob(line+'*', (err, files) => {
+    const words = line.split(/\s/);
+    const lastWord = words.pop()
+    if (/\s*\.\//.test(lastWord) || words.length > 0) {
+      glob(lastWord+'*', {
+        cwd: this.ctx.cwd,
+      }, (err, files) => {
         if (err) { return callback(err) }
-        callback(null, [files, line]);
+        callback(null, [files, lastWord]);
       });
     }
     else {
       // search path
-      const paths = process.env.PATH.split(path.delimiter);
+      const paths = this.ctx.env.PATH.split(path.delimiter);
       let idx = 0;
       let res = [];
       const found = paths.map((p) => {

@@ -278,6 +278,7 @@ simple_cmd   -> (assign __):* strict_word (__ loose_word):*
                 } %}
 
 compound_cmd -> (group_cmd | if_cmd | while_cmd | until_cmd | subshell_cmd)
+                {% id %}
 
 group_cmd    -> %LBRACE empty list_body (_ list_term):? empty %RBRACE
                 {% ([,,list,list_term,,]) => {
@@ -333,6 +334,15 @@ subshell_cmd -> %LPAREN empty list_body (_ list_term):? _ %RPAREN
                   }
                 } %}
 
+# js_cmd       -> %LJS empty (%JAVASCRIPT | string):* empty %RJS
+#                 {% ([,,parts,,]) => {
+#                   const js = combine('word', merge(...parts));
+#                   js.value = js.text;
+#                   return {
+#                     type: 'js_cmd',
+#                     js
+#                   }
+#                 } %}
 
 
 assign       -> %ASSIGN (word):?

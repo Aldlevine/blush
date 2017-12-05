@@ -31,12 +31,10 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/context.js~Context.html">Context</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/io.js~IO.html">IO</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/state.js~State.html">State</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-exec">exec</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#builtins">builtins</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~alias.html">alias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/alias.js~unalias.html">unalias</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/builtin.js~Builtin.html">Builtin</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/cd.js~Cd.html">Cd</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/chalk.js~Chalk.html">Chalk</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/eval.js~Eval.html">Eval</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/exit.js~Exit.html">Exit</a></span></span></li>
@@ -45,8 +43,8 @@
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/pwd.js~Pwd.html">Pwd</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/source.js~Source.html">Source</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/builtins/which.js~Which.html">Which</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-EventEmitter">EventEmitter</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-Builtin">Builtin</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-EventEmitter">EventEmitter</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#utils">utils</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/error.js~BlushError.html">BlushError</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/utils/printer.js~Printer.html">Printer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-locateCommand">locateCommand</a></span></span></li>
@@ -71,6 +69,7 @@ const {PassThrough} = require(&apos;stream&apos;);
 const {spawn} = require(&apos;child_process&apos;);
 const {Socket} = require(&apos;net&apos;);
 const fs = require(&apos;fs&apos;);
+const path = require(&apos;path&apos;);
 
 $.run = async function (node, ctx = new Context())
 {
@@ -289,6 +288,7 @@ $.simple_cmd = async function (node, ctx)
 
   log(&apos;evaluate simple_cmd &quot;%s&quot;&apos;, name);
 
+  const stdin = ctx.stdio[0];
   if (typeof ctx.requestInputStream === &apos;function&apos;) { ctx.stdio[0] = &apos;pipe&apos; }
   else if (ctx.requestInputStream === &apos;ignore&apos;) { ctx.stdio[0] = &apos;pipe&apos; }
 
@@ -309,7 +309,7 @@ $.simple_cmd = async function (node, ctx)
       proc = new builtins[name](name, args, ctx);
     }
     else {
-      let cmdpath;
+      let cmdpath
 
       try {
         cmdpath = locateCommand(name, node.dot, ctx.clone({env: process.env}));
@@ -332,9 +332,10 @@ $.simple_cmd = async function (node, ctx)
           if (!ast) {
             return rej(new BlushError(&apos;invalid syntax:\n\nUnexpected end of input\n&apos;, {errno: 1, source: name}));
           }
+          ctx.stdio[0] = stdin;
           ctx.stdio[1] = stdout;
           ctx.filename = cmdpath;
-          return res(await $.evaluate(ast, ctx.clone({subshell: true, exports})));
+          return res(await $.evaluate(ast, ctx.clone({subshell: true})));
         }
         catch (err) {
           return rej(err);
@@ -343,7 +344,13 @@ $.simple_cmd = async function (node, ctx)
       // }}}
 
       ctx.argv0 = origName;
-      proc = spawn(cmdpath, args, ctx.generate(exports));
+      try {
+        proc = spawn(cmdpath, args, ctx.generate(exports));
+      }
+      catch (err) {
+        // console.log(err);
+        return rej(err);
+      }
     }
 
     if (typeof ctx.requestInputStream === &apos;function&apos;) {
@@ -411,6 +418,18 @@ $.subshell_cmd = async function (node, ctx)
   log(&apos;evaluate subshell_cmd&apos;);
   await $.evaluate(node.list, ctx.clone({subshell: true}));
 }
+
+// $.js_cmd = async function js_cmd (node, ctx)
+// {
+//   const code = await $.evaluate(node.js, ctx);
+//   const newNode = {
+//     name: {type: &apos;word&apos;, value: &apos;node&apos;},
+//     args: [{type: &apos;word&apos;, value: &apos;-e&apos;}, {type: &apos;word&apos;, value: code}],
+//   };
+//   const filename = typeof ctx.filename === &apos;string&apos; ? ctx.filename : ctx.cwd + &apos;/VM.js&apos;;
+//   ctx.cwd = path.dirname(filename);
+//   return await $.simple_cmd(newNode, ctx);
+// }
 
 $.redir_ofile = async function (node, ctx)
 {

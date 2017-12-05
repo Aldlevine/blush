@@ -27,4 +27,4 @@ nbuild:
   - nearleyc src/blush.ne -o dist/grammar.js
 
 ntest:
-  - nearley-test dist/grammar -i "$(< ./test.sh)" $@
+  - nearley-test dist/grammar -i "$(< ./ps1.sh)" $@

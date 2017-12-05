@@ -12,6 +12,7 @@ const {PassThrough} = require('stream');
 const {spawn} = require('child_process');
 const {Socket} = require('net');
 const fs = require('fs');
+const path = require('path');
 
 $.run = async function (node, ctx = new Context())
 {
@@ -230,6 +231,7 @@ $.simple_cmd = async function (node, ctx)
 
   log('evaluate simple_cmd "%s"', name);
 
+  const stdin = ctx.stdio[0];
   if (typeof ctx.requestInputStream === 'function') { ctx.stdio[0] = 'pipe' }
   else if (ctx.requestInputStream === 'ignore') { ctx.stdio[0] = 'pipe' }
 
@@ -250,7 +252,7 @@ $.simple_cmd = async function (node, ctx)
       proc = new builtins[name](name, args, ctx);
     }
     else {
-      let cmdpath;
+      let cmdpath
 
       try {
         cmdpath = locateCommand(name, node.dot, ctx.clone({env: process.env}));
@@ -273,9 +275,10 @@ $.simple_cmd = async function (node, ctx)
           if (!ast) {
             return rej(new BlushError('invalid syntax:\n\nUnexpected end of input\n', {errno: 1, source: name}));
           }
+          ctx.stdio[0] = stdin;
           ctx.stdio[1] = stdout;
           ctx.filename = cmdpath;
-          return res(await $.evaluate(ast, ctx.clone({subshell: true, exports})));
+          return res(await $.evaluate(ast, ctx.clone({subshell: true})));
         }
         catch (err) {
           return rej(err);
@@ -284,7 +287,13 @@ $.simple_cmd = async function (node, ctx)
       // }}}
 
       ctx.argv0 = origName;
-      proc = spawn(cmdpath, args, ctx.generate(exports));
+      try {
+        proc = spawn(cmdpath, args, ctx.generate(exports));
+      }
+      catch (err) {
+        // console.log(err);
+        return rej(err);
+      }
     }
 
     if (typeof ctx.requestInputStream === 'function') {
@@ -352,6 +361,18 @@ $.subshell_cmd = async function (node, ctx)
   log('evaluate subshell_cmd');
   await $.evaluate(node.list, ctx.clone({subshell: true}));
 }
+
+// $.js_cmd = async function js_cmd (node, ctx)
+// {
+//   const code = await $.evaluate(node.js, ctx);
+//   const newNode = {
+//     name: {type: 'word', value: 'node'},
+//     args: [{type: 'word', value: '-e'}, {type: 'word', value: code}],
+//   };
+//   const filename = typeof ctx.filename === 'string' ? ctx.filename : ctx.cwd + '/VM.js';
+//   ctx.cwd = path.dirname(filename);
+//   return await $.simple_cmd(newNode, ctx);
+// }
 
 $.redir_ofile = async function (node, ctx)
 {

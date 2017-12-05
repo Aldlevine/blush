@@ -66,35 +66,66 @@ $.sub_word = async function sub_word (word, ctx)
 
 $.js_word = async function js_word (word, ctx)
 {
-  const {NodeVM} = require('vm2');
-  const dirname = typeof ctx.filename ==='string' ? path.dirname(ctx.filename) : ctx.cwd;
-  const vm = new NodeVM({
-    console: 'off',
-    sandbox: {},
-    require: {
-      external: true,
-      builtin: ['*'],
-      context: 'sandbox',
-    },
-    wrapper: 'none',
+  const vm = require('vm');
+  const filename = typeof ctx.filename === 'string' ? ctx.filename : ctx.cwd + '/VM.js';
+  const dirname = path.dirname(filename);
+
+  const mod = new module.constructor(filename);
+  mod.paths = [path.posix.resolve(filename, '../node_modules')];
+  let p = mod.paths[0];
+
+  // TODO: This seems dangerous
+  while (p !== '/node_modules') {
+    p = path.posix.resolve(p, '../../node_modules');
+    mod.paths.push(p);
+  }
+
+  mod.filename = filename;
+
+  const req = mod._compile('return require', filename);
+  const sandbox = vm.createContext({
+    require: req,
   });
 
+  const code = await $.expand(word.value, ctx);
   try {
-    // return vm.runInNewContext(await $.expand(word.value, ctx), {
-    //   __filename: ctx.filename,
-    //   __dirname: path.dirname(ctx.filename),
-    // }, {
-    //   filename: ctx.filename
-    // }).toString();
-    const result = (vm.run(await $.expand(word.value, ctx), ctx.filename))+'';
-    return result;
+    const result = vm.runInContext(code, sandbox, {breakOnSigint: true});
+    if (typeof result === 'undefined') return '';
+    return result+'';
   }
   catch (vmerr) {
-    const err = new BlushError(vmerr.message, {source: 'javascript', errno: 1});
+    const err = new BlushError(vmerr && vmerr.message || vmerr, {source: 'javascript', errno: 1});
     err.stack = vmerr.stack;
     throw err;
   }
 }
+
+// $._js_word = async function js_word (word, ctx)
+// {
+//   const {NodeVM} = require('vm2');
+//   const filename = typeof ctx.filename === 'string' ? ctx.filename : ctx.cwd + '/VM.js';
+//   const dirname = path.dirname(filename);
+//   const vm = new NodeVM({
+//     console: 'off',
+//     sandbox: {},
+//     require: {
+//       external: true,
+//       builtin: ['*'],
+//       context: 'sandbox',
+//     },
+//     wrapper: 'none',
+//   });
+
+//   try {
+//     const result = (vm.run(await $.expand(word.value, ctx), filename))+'';
+//     return result;
+//   }
+//   catch (vmerr) {
+//     const err = new BlushError(vmerr.message, {source: 'javascript', errno: 1});
+//     err.stack = vmerr.stack;
+//     throw err;
+//   }
+// }
 
 $.expand = async function (str, ctx)
 {

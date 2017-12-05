@@ -4,6 +4,7 @@
 - [ ] Run javascript directly using node's `vm` module
   - [ ] as a shell script
   - [x] as a javascript subshell
+  - [ ] ~~Shouldn't be done as substitution, but as it's own command.~~
 - [ ] Expose API to hosted scripts
 - [ ] Support custom prompt
 - [ ] Support custom readline
@@ -28,6 +29,9 @@
 - [ ] Syntax highlighting
 - [ ] Move all parse errors to the parse module. (Add recoverable flag to handle
   unexpected end of input errors)
+- [ ] Need a better syntax / approach for running js. The current approach is
+  rather ugly and not idiomatic (though it is effective). Should it use the
+  code's stdout as the value as opposed to the 'return' value?
 
 
 ### Questionable enhancements
@@ -41,7 +45,9 @@
 - [ ] ~~Fix word escaping (some sequences, like `\a` aren't handled)~~
 - [ ] Make escaping follow bash rules instead of zsh rules.
 - [ ] Enable escaping of `$` character to prevent substitution
-- [ ] Make subshell substitution work with assignments
+- [x] Make subshell substitution work with assignments
+- [ ] Exports don't work with assignments
+- [ ] Don't crash on bad file descriptors
 
 
 ### Core

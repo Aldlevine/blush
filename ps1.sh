@@ -6,33 +6,28 @@
 status="$?";
 
 cwd="$(pwd)";
-uname="$(whoami)"
-branch="$(git rev-parse --abbrev-ref HEAD |& cat || echo)"
+branch="$(2>/dev/null git rev-parse --abbrev-ref HEAD)"
 
 echo {%
 
-const chalk = new require('chalk').constructor({level: 3});
+const chalk = require('chalk').constructor({level: 3});
 
 const home = '$HOME';
+
 let cwd = '$cwd'
-.replace(/\n/g, '')
-.replace(RegExp(home), '~')
-.replace(/(\/|\\)([^\/\\]+)$/g, chalk`{dim.bgHex('#555')   }{white.bold.bgHex('#555')  $2 }`)
-.replace(/(?!^)(\/|\\)/g, chalk`{dim.bgHex('#555')   }`)
-.replace(/^\//, chalk`{bgHex('#555') / }{dim.bgHex('#555')  }`);
+  .replace(/\n/g, '')
+  .replace(RegExp(home), '~')
+  .replace(/(\/|\\)([^\/\\]+)$/g, chalk`{dim.bgHex('#555')   }{white.bold.bgHex('#555') $2}`)
+  .replace(/(?!^)(\/|\\)/g, chalk`{dim.bgHex('#555')   }`)
+  .replace(/^\//, chalk`{bgHex('#555') / }{dim.bgHex('#555')  }`);
 
-let uname = '$uname';
 let branch = '$branch';
+branch = branch.length ? chalk`{dim.bgHex('#555') } {bold.blue  $branch }` : '';
 
+const res = '$status' == 0
+? chalk`{bold.hex('#160').bgHex('#be0')  0 }{hex('#be0').bgHex('#555') }{bgHex('#555') ${ branch } ${ cwd } }{hex('#555') } `
+: chalk`{bold.white.bgHex('#700')  ${ $status } }{hex('#700').bgHex('#555') }{bgHex('#555') ${ branch } ${ cwd } }{hex('#555') } `;
 
-uname = chalk`{bold.white.bgHex('#169')  $uname }{hex('#169').bgHex('#555') }`;
-
-branch = branch.replace(/^fatal:.+$/, '');
-branch = branch.length ? chalk`{dim.bgHex('#555')  } {bold.blue  $branch}` : '';
-
-return '$status' == 0
-? chalk`{bold.hex('#160').bgHex('#be0')  0 }{hex('#be0').bgHex('#169') }${ uname }{bgHex('#555')  ${ cwd }${ branch } }{hex('#555') } `
-: chalk`{bold.white.bgHex('#700')  ${ $status } }{hex('#700').bgHex('#169') }${ uname }{bgHex('#555')  ${ cwd }${ branch } }{hex('#555') } `;
+res;
 
 %};
-

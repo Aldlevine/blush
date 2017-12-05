@@ -70,7 +70,13 @@ module.exports = class Printer
 
   static formatSystemError (err)
   {
-    let msg = errno.code[err.code].description;
+    let msg;
+    switch (err.code) {
+      case 'E2BIG':
+        msg = 'argument list too long'; break;
+      default:
+        msg = errno.code[err.code].description; break;
+    }
     if (err.path) { msg = err.path + ': ' + msg }
     return msg;
   }

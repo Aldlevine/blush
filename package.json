@@ -4,9 +4,7 @@
   "description": "Basic little universal shell",
   "license": "MIT",
   "author": "Aaron Levine <ald.levine@gmail.com>",
-  "bin": {
-    "blush": "src/index.js"
-  },
+  "bin": { "blush": "src/index.js" },
   "scripts": {
     "build": "ez build",
     "precommit": "ez precommit",
@@ -17,18 +15,13 @@
     "update": "ez update",
     "version": "ez version"
   },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
+  "config": { "commitizen": { "path": "./node_modules/cz-conventional-changelog" } },
   "dependencies": {
     "chalk": "^2.3.0",
     "debug": "^3.1.0",
     "errno": "^0.1.4",
     "glob": "^7.1.2",
-    "nearley": "^2.11.0",
-    "vm2": "^3.5.2"
+    "nearley": "^2.11.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^4.3.0",
@@ -56,17 +49,8 @@
     "source": "src/**/*.js",
     "dev": "test/**/*",
     "pretty": 80,
-    "detective": {
-      "parse": {
-        "plugins": [
-          "objectRestSpread"
-        ]
-      }
-    },
-    "ignore": [
-      "slashes",
-      "unescape-js"
-    ]
+    "detective": { "parse": { "plugins": [ "objectRestSpread" ] } },
+    "ignore": [ "slashes", "unescape-js" ]
   },
   "scripteasy": "scripts.yml"
 }

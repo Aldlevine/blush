@@ -144,12 +144,10 @@ function id(x) {return x[0]; }
       SQUO: { match: `'`, pop: true }
     },
     javascript: {
-      // EQUO: { match: `$'`, push: 'estring' },
       DQUO: { match: `"`, push: 'dstring' },
       SQUO: { match: `'`, push: 'sstring' },
       RJS: { match: '%\}', pop: true },
       JAVASCRIPT: { match: /(?:[^%"']|(?:%(?!\})))+/, lineBreaks: true},
-      // JAVASCRIPT: { match: /[^%"']+/, lineBreaks: true},
     }
   });
 var grammar = {
@@ -305,7 +303,7 @@ var grammar = {
     {"name": "compound_cmd$subexpression$1", "symbols": ["while_cmd"]},
     {"name": "compound_cmd$subexpression$1", "symbols": ["until_cmd"]},
     {"name": "compound_cmd$subexpression$1", "symbols": ["subshell_cmd"]},
-    {"name": "compound_cmd", "symbols": ["compound_cmd$subexpression$1"]},
+    {"name": "compound_cmd", "symbols": ["compound_cmd$subexpression$1"], "postprocess": id},
     {"name": "group_cmd$ebnf$1$subexpression$1", "symbols": ["_", "list_term"]},
     {"name": "group_cmd$ebnf$1", "symbols": ["group_cmd$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "group_cmd$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},

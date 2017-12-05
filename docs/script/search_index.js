@@ -6,21 +6,15 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
-    "blush/src/builtins/builtin.js~builtin",
-    "class/src/builtins/builtin.js~Builtin.html",
-    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/builtin.js</span>",
-    "class"
-  ],
-  [
-    "blush/src/builtins/exit.js~builtin",
+    "blush/src/builtins/alias.js~builtin",
     "variable/index.html#static-variable-Builtin",
-    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/exit.js</span>",
+    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/alias.js</span>",
     "variable"
   ],
   [
-    "blush/src/builtins/cd.js~cd",
-    "class/src/builtins/cd.js~Cd.html",
-    "<span>Cd</span> <span class=\"search-result-import-path\">blush/src/builtins/cd.js</span>",
+    "blush/src/builtins/builtin.js~builtin",
+    "class/src/builtins/builtin.js~Builtin.html",
+    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/builtin.js</span>",
     "class"
   ],
   [
@@ -87,12 +81,6 @@ window.esdocSearchIndex = [
     "blush/src/builtins/source.js~source",
     "class/src/builtins/source.js~Source.html",
     "<span>Source</span> <span class=\"search-result-import-path\">blush/src/builtins/source.js</span>",
-    "class"
-  ],
-  [
-    "blush/src/state.js~state",
-    "class/src/state.js~State.html",
-    "<span>State</span> <span class=\"search-result-import-path\">blush/src/state.js</span>",
     "class"
   ],
   [
@@ -498,18 +486,6 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/builtins/cd.js",
-    "file/src/builtins/cd.js.html",
-    "src/builtins/cd.js",
-    "file"
-  ],
-  [
-    "src/builtins/cd.js~cd#constructor",
-    "class/src/builtins/cd.js~Cd.html#instance-constructor-constructor",
-    "src/builtins/cd.js~Cd#constructor",
-    "method"
-  ],
-  [
     "src/builtins/chalk.js",
     "file/src/builtins/chalk.js.html",
     "src/builtins/chalk.js",
@@ -673,13 +649,13 @@ window.esdocSearchIndex = [
   ],
   [
     "src/context.js~context#exports",
-    "class/src/context.js~Context.html#instance-get-exports",
+    "class/src/context.js~Context.html#instance-set-exports",
     "src/context.js~Context#exports",
     "member"
   ],
   [
     "src/context.js~context#exports",
-    "class/src/context.js~Context.html#instance-set-exports",
+    "class/src/context.js~Context.html#instance-get-exports",
     "src/context.js~Context#exports",
     "member"
   ],
@@ -850,48 +826,6 @@ window.esdocSearchIndex = [
     "file/src/run.js.html",
     "src/run.js",
     "file"
-  ],
-  [
-    "src/state.js",
-    "file/src/state.js.html",
-    "src/state.js",
-    "file"
-  ],
-  [
-    "src/state.js~state#constructor",
-    "class/src/state.js~State.html#instance-constructor-constructor",
-    "src/state.js~State#constructor",
-    "method"
-  ],
-  [
-    "src/state.js~state#dirstack",
-    "class/src/state.js~State.html#instance-member-dirstack",
-    "src/state.js~State#dirstack",
-    "member"
-  ],
-  [
-    "src/state.js~state#env",
-    "class/src/state.js~State.html#instance-member-env",
-    "src/state.js~State#env",
-    "member"
-  ],
-  [
-    "src/state.js~state#restore",
-    "class/src/state.js~State.html#instance-method-restore",
-    "src/state.js~State#restore",
-    "method"
-  ],
-  [
-    "src/state.js~state#save",
-    "class/src/state.js~State.html#instance-method-save",
-    "src/state.js~State#save",
-    "method"
-  ],
-  [
-    "src/state.js~state#savedstates",
-    "class/src/state.js~State.html#instance-member-savedStates",
-    "src/state.js~State#savedStates",
-    "member"
   ],
   [
     "src/utils/error.js",
