@@ -249,7 +249,12 @@ $.simple_cmd = async function (node, ctx)
     }
 
     if (name in builtins) {
-      proc = new builtins[name](name, args, ctx);
+      try {
+        proc = new builtins[name](name, args, ctx);
+      }
+      catch (err) {
+        return rej(err);
+      }
     }
     else {
       let cmdpath
