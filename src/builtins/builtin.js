@@ -21,6 +21,8 @@ module.exports = class Builtin extends EventEmitter
 
     this.stderr = this.stdio[2] =
     this.stdio[2] == 'pipe' ? new PassThrough() : this.stdio[2];
+
+    setTimeout(() => this.exit(1), 0);
   }
 
   exit (result)

@@ -6,16 +6,16 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
-    "blush/src/builtins/alias.js~builtin",
-    "variable/index.html#static-variable-Builtin",
-    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/alias.js</span>",
-    "variable"
-  ],
-  [
     "blush/src/builtins/builtin.js~builtin",
     "class/src/builtins/builtin.js~Builtin.html",
     "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/builtin.js</span>",
     "class"
+  ],
+  [
+    "blush/src/builtins/export.js~builtin",
+    "variable/index.html#static-variable-Builtin",
+    "<span>Builtin</span> <span class=\"search-result-import-path\">blush/src/builtins/export.js</span>",
+    "variable"
   ],
   [
     "blush/src/builtins/chalk.js~chalk",
@@ -75,6 +75,12 @@ window.esdocSearchIndex = [
     "blush/src/builtins/pwd.js~pwd",
     "class/src/builtins/pwd.js~Pwd.html",
     "<span>Pwd</span> <span class=\"search-result-import-path\">blush/src/builtins/pwd.js</span>",
+    "class"
+  ],
+  [
+    "blush/src/builtins/require.js~require",
+    "class/src/builtins/require.js~Require.html",
+    "<span>Require</span> <span class=\"search-result-import-path\">blush/src/builtins/require.js</span>",
     "class"
   ],
   [
@@ -558,6 +564,18 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "src/builtins/require.js",
+    "file/src/builtins/require.js.html",
+    "src/builtins/require.js",
+    "file"
+  ],
+  [
+    "src/builtins/require.js~require#constructor",
+    "class/src/builtins/require.js~Require.html#instance-constructor-constructor",
+    "src/builtins/require.js~Require#constructor",
+    "method"
+  ],
+  [
     "src/builtins/source.js",
     "file/src/builtins/source.js.html",
     "src/builtins/source.js",
@@ -613,13 +631,13 @@ window.esdocSearchIndex = [
   ],
   [
     "src/context.js~context#dirstack",
-    "class/src/context.js~Context.html#instance-get-dirstack",
+    "class/src/context.js~Context.html#instance-set-dirstack",
     "src/context.js~Context#dirstack",
     "member"
   ],
   [
     "src/context.js~context#dirstack",
-    "class/src/context.js~Context.html#instance-set-dirstack",
+    "class/src/context.js~Context.html#instance-get-dirstack",
     "src/context.js~Context#dirstack",
     "member"
   ],
@@ -637,25 +655,25 @@ window.esdocSearchIndex = [
   ],
   [
     "src/context.js~context#exitcode",
-    "class/src/context.js~Context.html#instance-get-exitCode",
-    "src/context.js~Context#exitCode",
-    "member"
-  ],
-  [
-    "src/context.js~context#exitcode",
     "class/src/context.js~Context.html#instance-set-exitCode",
     "src/context.js~Context#exitCode",
     "member"
   ],
   [
-    "src/context.js~context#exports",
-    "class/src/context.js~Context.html#instance-set-exports",
-    "src/context.js~Context#exports",
+    "src/context.js~context#exitcode",
+    "class/src/context.js~Context.html#instance-get-exitCode",
+    "src/context.js~Context#exitCode",
     "member"
   ],
   [
     "src/context.js~context#exports",
     "class/src/context.js~Context.html#instance-get-exports",
+    "src/context.js~Context#exports",
+    "member"
+  ],
+  [
+    "src/context.js~context#exports",
+    "class/src/context.js~Context.html#instance-set-exports",
     "src/context.js~Context#exports",
     "member"
   ],

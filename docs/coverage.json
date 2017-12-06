@@ -1,6 +1,6 @@
 {
   "coverage": "0%",
-  "expectCount": 194,
+  "expectCount": 198,
   "actualCount": 0,
   "files": {
     "src/builtins/alias.js": {
@@ -30,8 +30,8 @@
         16,
         19,
         22,
-        26,
-        33
+        28,
+        35
       ]
     },
     "src/builtins/chalk.js": {
@@ -91,6 +91,16 @@
         3,
         5,
         7
+      ]
+    },
+    "src/builtins/require.js": {
+      "expectCount": 4,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        2,
+        4,
+        6
       ]
     },
     "src/builtins/source.js": {
