@@ -17,6 +17,4 @@ exports.exit = require('./exit');
 exports.export = require('./export');
 exports.eval = require('./eval');
 
-exports['@['] = require('./javascript');
-
-exports.chalk = require('./chalk');
+exports.require = require('./require');
