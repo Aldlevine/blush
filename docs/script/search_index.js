@@ -102,6 +102,12 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
+    "blush/src/utils/caseless-object.js~caseless",
+    "function/index.html#static-function-caseless",
+    "<span>caseless</span> <span class=\"search-result-import-path\">blush/src/utils/caseless-object.js</span>",
+    "function"
+  ],
+  [
     "blush/src/exec.js~exec",
     "function/index.html#static-function-exec",
     "<span>exec</span> <span class=\"search-result-import-path\">blush/src/exec.js</span>",
@@ -619,25 +625,25 @@ window.esdocSearchIndex = [
   ],
   [
     "src/context.js~context#cwd",
-    "class/src/context.js~Context.html#instance-get-cwd",
-    "src/context.js~Context#cwd",
-    "member"
-  ],
-  [
-    "src/context.js~context#cwd",
     "class/src/context.js~Context.html#instance-set-cwd",
     "src/context.js~Context#cwd",
     "member"
   ],
   [
-    "src/context.js~context#dirstack",
-    "class/src/context.js~Context.html#instance-set-dirstack",
-    "src/context.js~Context#dirstack",
+    "src/context.js~context#cwd",
+    "class/src/context.js~Context.html#instance-get-cwd",
+    "src/context.js~Context#cwd",
     "member"
   ],
   [
     "src/context.js~context#dirstack",
     "class/src/context.js~Context.html#instance-get-dirstack",
+    "src/context.js~Context#dirstack",
+    "member"
+  ],
+  [
+    "src/context.js~context#dirstack",
+    "class/src/context.js~Context.html#instance-set-dirstack",
     "src/context.js~Context#dirstack",
     "member"
   ],
@@ -667,13 +673,13 @@ window.esdocSearchIndex = [
   ],
   [
     "src/context.js~context#exports",
-    "class/src/context.js~Context.html#instance-get-exports",
+    "class/src/context.js~Context.html#instance-set-exports",
     "src/context.js~Context#exports",
     "member"
   ],
   [
     "src/context.js~context#exports",
-    "class/src/context.js~Context.html#instance-set-exports",
+    "class/src/context.js~Context.html#instance-get-exports",
     "src/context.js~Context#exports",
     "member"
   ],
@@ -843,6 +849,12 @@ window.esdocSearchIndex = [
     "src/run.js",
     "file/src/run.js.html",
     "src/run.js",
+    "file"
+  ],
+  [
+    "src/utils/caseless-object.js",
+    "file/src/utils/caseless-object.js.html",
+    "src/utils/caseless-object.js",
     "file"
   ],
   [

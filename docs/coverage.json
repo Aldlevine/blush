@@ -1,6 +1,6 @@
 {
   "coverage": "0%",
-  "expectCount": 198,
+  "expectCount": 200,
   "actualCount": 0,
   "files": {
     "src/builtins/alias.js": {
@@ -252,6 +252,14 @@
         402,
         414,
         419
+      ]
+    },
+    "src/utils/caseless-object.js": {
+      "expectCount": 2,
+      "actualCount": 0,
+      "undocumentLines": [
+        1,
+        9
       ]
     },
     "src/utils/error.js": {

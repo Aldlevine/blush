@@ -4091,6 +4091,78 @@
   {
     "__docId__": 221,
     "kind": "file",
+    "name": "src/utils/caseless-object.js",
+    "content": "function upper (val)\n{\n  if (typeof val === 'string' || val instanceof String) {\n    return val.toUpperCase();\n  }\n  return val;\n}\n\nmodule.exports = function caseless (obj)\n{\n  obj = Object.entries(obj).reduce((acc, [key, val]) =>\n  (acc[upper(key)] = val, acc), {});\n\n  return new Proxy(obj, {\n    get (obj, key) { return obj[upper(key)] },\n    set (obj, key, val) { return obj[upper(key)] = val }\n  })\n}\n",
+    "static": true,
+    "longname": "/mnt/fast/Projects/blush/src/utils/caseless-object.js",
+    "access": "public",
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 222,
+    "kind": "function",
+    "name": "upper",
+    "memberof": "src/utils/caseless-object.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/utils/caseless-object.js~upper",
+    "access": "public",
+    "export": false,
+    "importPath": "blush/src/utils/caseless-object.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "params": [
+      {
+        "name": "val",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 223,
+    "kind": "function",
+    "name": "caseless",
+    "memberof": "src/utils/caseless-object.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/utils/caseless-object.js~caseless",
+    "access": "public",
+    "export": true,
+    "importPath": "blush/src/utils/caseless-object.js",
+    "importStyle": "caseless",
+    "description": null,
+    "lineNumber": 9,
+    "undocument": true,
+    "params": [
+      {
+        "name": "obj",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 224,
+    "kind": "file",
     "name": "src/utils/error.js",
     "content": "module.exports = class BlushError extends Error\n{\n  constructor (message, errno)\n  {\n    super(message);\n\n    if (!isNaN(errno)) { this.errno = errno }\n    else { Object.assign(this, errno) }\n  }\n}\n",
     "static": true,
@@ -4100,7 +4172,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 222,
+    "__docId__": 225,
     "kind": "class",
     "name": "BlushError",
     "memberof": "src/utils/error.js",
@@ -4119,7 +4191,7 @@
     ]
   },
   {
-    "__docId__": 223,
+    "__docId__": 226,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/utils/error.js~BlushError",
@@ -4133,7 +4205,7 @@
     "undocument": true
   },
   {
-    "__docId__": 224,
+    "__docId__": 227,
     "kind": "member",
     "name": "errno",
     "memberof": "src/utils/error.js~BlushError",
@@ -4150,7 +4222,7 @@
     }
   },
   {
-    "__docId__": 225,
+    "__docId__": 228,
     "kind": "file",
     "name": "src/utils/locate-command.js",
     "content": "const BlushError = require('./error.js');\nconst glob = require('glob');\nconst path = require('path');\nconst log = require('./debug')('blush:locate-command');\nconst fs = require('fs');\n\nmodule.exports = function locateCommand (name, local, ctx)\n{\n  let pattern;\n  let isFile = local;\n\n  if (local) { pattern = path.resolve(ctx.cwd, name) }\n  else if (/^(~|\\/)/.test(name)) {\n    isFile = true;\n    pattern = name;\n  }\n  else {\n    paths = ctx.env.PATH.split(path.delimiter);\n    pattern = '{'+paths.map((p) => path.resolve(p, name)).join(',')+'}';\n  }\n\n  const result = glob.sync(pattern)[0];\n\n  if (result) {\n    const stats = fs.statSync(result);\n\n    if (stats.isFile()) {\n      try { fs.accessSync(result, fs.constants.X_OK) }\n      catch (err) { throw new BlushError(`permission denied`, 126) }\n      return result;\n    }\n\n    if (stats.isDirectory()) { throw new BlushError(`is a directory`, 126) }\n  }\n\n  if (isFile) { throw new BlushError(`no such file or directory`, 127) }\n\n  throw new BlushError(`command not found`, 127)\n}\n",
@@ -4161,7 +4233,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 226,
+    "__docId__": 229,
     "kind": "variable",
     "name": "BlushError",
     "memberof": "src/utils/locate-command.js",
@@ -4182,7 +4254,7 @@
     "ignore": true
   },
   {
-    "__docId__": 227,
+    "__docId__": 230,
     "kind": "variable",
     "name": "glob",
     "memberof": "src/utils/locate-command.js",
@@ -4203,7 +4275,7 @@
     "ignore": true
   },
   {
-    "__docId__": 228,
+    "__docId__": 231,
     "kind": "variable",
     "name": "path",
     "memberof": "src/utils/locate-command.js",
@@ -4224,7 +4296,7 @@
     "ignore": true
   },
   {
-    "__docId__": 229,
+    "__docId__": 232,
     "kind": "variable",
     "name": "log",
     "memberof": "src/utils/locate-command.js",
@@ -4245,7 +4317,7 @@
     "ignore": true
   },
   {
-    "__docId__": 230,
+    "__docId__": 233,
     "kind": "variable",
     "name": "fs",
     "memberof": "src/utils/locate-command.js",
@@ -4266,7 +4338,7 @@
     "ignore": true
   },
   {
-    "__docId__": 231,
+    "__docId__": 234,
     "kind": "function",
     "name": "locateCommand",
     "memberof": "src/utils/locate-command.js",
@@ -4308,7 +4380,7 @@
     }
   },
   {
-    "__docId__": 232,
+    "__docId__": 235,
     "kind": "file",
     "name": "src/utils/parse-exit-code.js",
     "content": "const os = require('os');\n\nmodule.exports = function parseExitCode (err)\n{\n  if (!isNaN(err)) { return err }\n  else if (typeof err === 'string') {\n    const code = os.constants.signals[err] + 128;\n    return code;\n  }\n  else if (err.errno) {\n    let code = err.errno;\n    if (typeof code === 'string') { code = os.constants.errno[code] }\n    return code;\n  }\n  return -1;\n}\n",
@@ -4319,7 +4391,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 233,
+    "__docId__": 236,
     "kind": "variable",
     "name": "os",
     "memberof": "src/utils/parse-exit-code.js",
@@ -4340,7 +4412,7 @@
     "ignore": true
   },
   {
-    "__docId__": 234,
+    "__docId__": 237,
     "kind": "function",
     "name": "parseExitCode",
     "memberof": "src/utils/parse-exit-code.js",
@@ -4370,7 +4442,7 @@
     }
   },
   {
-    "__docId__": 235,
+    "__docId__": 238,
     "kind": "file",
     "name": "src/utils/printer.js",
     "content": "const IO = require('../io');\nconst log = require('./debug')('blush:print');\nconst errno = require('errno');\n\nmodule.exports = class Printer\n{\n  constructor ({\n    stdio = new IO,\n    formatOut = Printer.formatOut,\n    formatErr = Printer.formatErr,\n  }={})\n  {\n    this.stdio = stdio;\n    this.formatOut = formatOut;\n    this.formatErr = formatErr;\n  }\n\n  out (...args)\n  {\n    stdio[1].write(this.formatOut(...args));\n  }\n\n  err (...args)\n  {\n    stdio[2].write(this.formatErr(...args));\n  }\n\n  static out ({\n    stdio = new IO,\n    formatOut = Printer.formatOut,\n  } = {}, ...args)\n  {\n    stdio[1].write(formatOut(...args));\n  }\n\n  static err ({\n    stdio = new IO,\n    formatErr = Printer.formatErr,\n  } = {}, ...args)\n  {\n    stdio[2].write(formatErr(...args));\n  }\n\n  static formatOut (...args)\n  {\n    return args.map((value) => {\n      if (value && typeof value === 'object') { return JSON.stringify(value, null, 2) }\n      return value;\n    }).join('\\n')+'\\n';\n  }\n\n  static formatErr (...args)\n  {\n    return args\n    .filter((value) => !(value && typeof value === 'object' && value.wasPrinted))\n    .map((value) => {\n      if (value && typeof value === 'object') { value.wasPrinted = true };\n\n      if (value instanceof Error) {\n        let message = value.message;\n\n        if (value.syscall) message = Printer.formatSystemError(value);\n\n        return `blush:${value.source ? ' '+value.source+':' : ''} ${message}\\n`;\n      }\n\n      if (typeof value === 'string') { return `blush: ${arg}` }\n    }).join('\\n');\n  }\n\n  static formatSystemError (err)\n  {\n    let msg;\n    switch (err.code) {\n      case 'E2BIG':\n        msg = 'argument list too long'; break;\n      default:\n        msg = errno.code[err.code].description; break;\n    }\n    if (err.path) { msg = err.path + ': ' + msg }\n    return msg;\n  }\n}\n",
@@ -4381,7 +4453,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 236,
+    "__docId__": 239,
     "kind": "variable",
     "name": "IO",
     "memberof": "src/utils/printer.js",
@@ -4402,7 +4474,7 @@
     "ignore": true
   },
   {
-    "__docId__": 237,
+    "__docId__": 240,
     "kind": "variable",
     "name": "log",
     "memberof": "src/utils/printer.js",
@@ -4423,7 +4495,7 @@
     "ignore": true
   },
   {
-    "__docId__": 238,
+    "__docId__": 241,
     "kind": "variable",
     "name": "errno",
     "memberof": "src/utils/printer.js",
@@ -4444,7 +4516,7 @@
     "ignore": true
   },
   {
-    "__docId__": 239,
+    "__docId__": 242,
     "kind": "class",
     "name": "Printer",
     "memberof": "src/utils/printer.js",
@@ -4460,7 +4532,7 @@
     "interface": false
   },
   {
-    "__docId__": 240,
+    "__docId__": 243,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/utils/printer.js~Printer",
@@ -4474,7 +4546,7 @@
     "undocument": true
   },
   {
-    "__docId__": 241,
+    "__docId__": 244,
     "kind": "member",
     "name": "stdio",
     "memberof": "src/utils/printer.js~Printer",
@@ -4491,7 +4563,7 @@
     }
   },
   {
-    "__docId__": 242,
+    "__docId__": 245,
     "kind": "member",
     "name": "formatOut",
     "memberof": "src/utils/printer.js~Printer",
@@ -4508,7 +4580,7 @@
     }
   },
   {
-    "__docId__": 243,
+    "__docId__": 246,
     "kind": "member",
     "name": "formatErr",
     "memberof": "src/utils/printer.js~Printer",
@@ -4525,7 +4597,7 @@
     }
   },
   {
-    "__docId__": 244,
+    "__docId__": 247,
     "kind": "method",
     "name": "out",
     "memberof": "src/utils/printer.js~Printer",
@@ -4549,7 +4621,7 @@
     "return": null
   },
   {
-    "__docId__": 245,
+    "__docId__": 248,
     "kind": "method",
     "name": "err",
     "memberof": "src/utils/printer.js~Printer",
@@ -4573,7 +4645,7 @@
     "return": null
   },
   {
-    "__docId__": 246,
+    "__docId__": 249,
     "kind": "method",
     "name": "out",
     "memberof": "src/utils/printer.js~Printer",
@@ -4606,7 +4678,7 @@
     "return": null
   },
   {
-    "__docId__": 247,
+    "__docId__": 250,
     "kind": "method",
     "name": "err",
     "memberof": "src/utils/printer.js~Printer",
@@ -4639,7 +4711,7 @@
     "return": null
   },
   {
-    "__docId__": 248,
+    "__docId__": 251,
     "kind": "method",
     "name": "formatOut",
     "memberof": "src/utils/printer.js~Printer",
@@ -4667,7 +4739,7 @@
     }
   },
   {
-    "__docId__": 249,
+    "__docId__": 252,
     "kind": "method",
     "name": "formatErr",
     "memberof": "src/utils/printer.js~Printer",
@@ -4695,7 +4767,7 @@
     }
   },
   {
-    "__docId__": 250,
+    "__docId__": 253,
     "kind": "method",
     "name": "formatSystemError",
     "memberof": "src/utils/printer.js~Printer",
@@ -4722,7 +4794,7 @@
     }
   },
   {
-    "__docId__": 251,
+    "__docId__": 254,
     "kind": "file",
     "name": "src/utils/read-shebang.js",
     "content": "const fs = require('fs');\n\nmodule.exports = async function readShebang (path)\n{\n  return await new Promise((res, rej) => {\n    const rs = fs.createReadStream(path, {encoding: 'utf8'});\n    let acc = '';\n    let pos = 0;\n    let isShebang = true;\n    let index;\n    rs\n    .on('data', function (chunk) {\n      index = chunk.indexOf('\\n');\n      acc += chunk;\n      if (!/\\s*(#!)?/.test(acc)) { rs.close(); return; }\n      index !== -1 ? rs.close() : pos += chunk.length;\n    })\n    .on('close', function () {\n      let result = acc.slice(0, pos + index).trim();\n      if (/^#!/.test(result)) { return res(result.slice(2)) }\n      res(null);\n    })\n    .on('error', function (err) {\n      rej(err);\n    })\n  });\n}\n",
@@ -4733,7 +4805,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 252,
+    "__docId__": 255,
     "kind": "variable",
     "name": "fs",
     "memberof": "src/utils/read-shebang.js",
@@ -4754,7 +4826,7 @@
     "ignore": true
   },
   {
-    "__docId__": 253,
+    "__docId__": 256,
     "kind": "function",
     "name": "readShebang",
     "memberof": "src/utils/read-shebang.js",
@@ -4784,7 +4856,7 @@
     }
   },
   {
-    "__docId__": 254,
+    "__docId__": 257,
     "kind": "file",
     "name": "src/word.js",
     "content": "const BlushError = require('./utils/error');\nconst log = require('./utils/debug')('blush:word');\nconst path = require('path');\nconst os = require('os');\n\nconst $ = exports;\n\n$.evaluate = async function evaluate (word, ctx)\n{\n  if (word instanceof Array) {\n    let result = '';\n    for (let part of word) {\n      try { result += await $.evaluate(part, ctx) }\n      catch (err) { break }\n    }\n    return result;\n  }\n\n  const type = word.type && word.type.toLowerCase();\n\n  if (!(type in $)) {\n    return log('node type \\'%s\\' not implemented', word.type);\n  }\n  return await $[type](word, ctx);\n}\n\n$.word = async function word (word, ctx)\n{\n  return $.expand(word.value, ctx);\n}\n\n$.dstr = async function string (word, ctx)\n{\n  let out = '';\n  for (let part of word.parts) { out += await $.evaluate(part, ctx) }\n  return await $.expand_env(out, ctx);\n}\n\n$.dstr_string =\n$.sstr =\n$.estr = async function string (word, ctx)\n{\n  return word.value;\n}\n\n$.loose_word = async function loose_word (word, ctx)\n{\n  let out = '';\n  for (let part of word.parts) { out += await $.evaluate(part, ctx) }\n  return out;\n}\n\n$.dstr_sub_word = async function dstr_sub_word (word, ctx)\n{\n  const exec = require('./exec');\n  let out = await exec(word.list, ctx);\n  return out.replace(/\\s+$/, '');\n}\n\n$.sub_word = async function sub_word (word, ctx)\n{\n  const exec = require('./exec');\n  let out = await exec(word.list, ctx);\n  return out.replace(/\\s+$/, '').replace(/\\s+/g, ' ');\n}\n\n$.js_word = async function js_word (word, ctx)\n{\n  const vm = require('vm');\n  const filename = typeof ctx.filename === 'string' ? ctx.filename : ctx.cwd + '/VM.js';\n  const dirname = path.dirname(filename);\n\n  const mod = new module.constructor(filename);\n  mod.paths = [path.posix.resolve(filename, '../node_modules')];\n  let p = mod.paths[0];\n\n  // TODO: This seems dangerous\n  while (p !== '/node_modules') {\n    p = path.posix.resolve(p, '../../node_modules');\n    mod.paths.push(p);\n  }\n\n  mod.filename = filename;\n\n  const req = mod._compile('return require', filename);\n  const sandbox = vm.createContext({\n    require: req,\n  });\n\n  const code = await $.expand(word.value, ctx);\n  try {\n    const result = vm.runInContext(code, sandbox, {breakOnSigint: true});\n    if (typeof result === 'undefined') return '';\n    return result+'';\n  }\n  catch (vmerr) {\n    const err = new BlushError(vmerr && vmerr.message || vmerr, {source: 'javascript', errno: 1});\n    err.stack = vmerr.stack;\n    throw err;\n  }\n}\n\n// $._js_word = async function js_word (word, ctx)\n// {\n//   const {NodeVM} = require('vm2');\n//   const filename = typeof ctx.filename === 'string' ? ctx.filename : ctx.cwd + '/VM.js';\n//   const dirname = path.dirname(filename);\n//   const vm = new NodeVM({\n//     console: 'off',\n//     sandbox: {},\n//     require: {\n//       external: true,\n//       builtin: ['*'],\n//       context: 'sandbox',\n//     },\n//     wrapper: 'none',\n//   });\n\n//   try {\n//     const result = (vm.run(await $.expand(word.value, ctx), filename))+'';\n//     return result;\n//   }\n//   catch (vmerr) {\n//     const err = new BlushError(vmerr.message, {source: 'javascript', errno: 1});\n//     err.stack = vmerr.stack;\n//     throw err;\n//   }\n// }\n\n$.expand = async function (str, ctx)\n{\n  str = await $.expand_tilde(str, ctx);\n  str = await $.expand_env(str, ctx);\n  return str;\n}\n\n$.expand_env = async function (str, ctx)\n{\n  return str\n  // .replace(/\\$\\?/g, () => ctx.exitCode)\n  .replace(/\\$([a-zA-Z_][a-zA-Z0-9_]*|\\?)/g, (match) => {\n    const name = match.slice(1);\n    return name in ctx.env ? ctx.env[name] : '';\n  })\n  .replace(/\\$\\{([a-zA-Z_][a-zA-Z0-9_]*|\\?)\\}/g, (match) => {\n    const name = match.slice(2, -1);\n    return name in ctx.env ? ctx.env[name] : '';\n  });\n}\n\n$.expand_tilde = async function (str, ctx)\n{\n  return str.replace(/^~/, os.homedir());\n}\n",
@@ -4795,7 +4867,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 255,
+    "__docId__": 258,
     "kind": "variable",
     "name": "BlushError",
     "memberof": "src/word.js",
@@ -4816,7 +4888,7 @@
     "ignore": true
   },
   {
-    "__docId__": 256,
+    "__docId__": 259,
     "kind": "variable",
     "name": "log",
     "memberof": "src/word.js",
@@ -4837,7 +4909,7 @@
     "ignore": true
   },
   {
-    "__docId__": 257,
+    "__docId__": 260,
     "kind": "variable",
     "name": "path",
     "memberof": "src/word.js",
@@ -4858,7 +4930,7 @@
     "ignore": true
   },
   {
-    "__docId__": 258,
+    "__docId__": 261,
     "kind": "variable",
     "name": "os",
     "memberof": "src/word.js",
@@ -4879,7 +4951,7 @@
     "ignore": true
   },
   {
-    "__docId__": 259,
+    "__docId__": 262,
     "kind": "variable",
     "name": "$",
     "memberof": "src/word.js",
@@ -4900,7 +4972,7 @@
     "ignore": true
   },
   {
-    "__docId__": 260,
+    "__docId__": 263,
     "kind": "function",
     "name": "evaluate",
     "memberof": "src/word.js",
@@ -4937,7 +5009,7 @@
     "ignore": true
   },
   {
-    "__docId__": 261,
+    "__docId__": 264,
     "kind": "function",
     "name": "word",
     "memberof": "src/word.js",
@@ -4974,7 +5046,7 @@
     "ignore": true
   },
   {
-    "__docId__": 262,
+    "__docId__": 265,
     "kind": "function",
     "name": "dstr",
     "memberof": "src/word.js",
@@ -5011,7 +5083,7 @@
     "ignore": true
   },
   {
-    "__docId__": 263,
+    "__docId__": 266,
     "kind": "function",
     "name": "loose_word",
     "memberof": "src/word.js",
@@ -5048,7 +5120,7 @@
     "ignore": true
   },
   {
-    "__docId__": 264,
+    "__docId__": 267,
     "kind": "function",
     "name": "dstr_sub_word",
     "memberof": "src/word.js",
@@ -5085,7 +5157,7 @@
     "ignore": true
   },
   {
-    "__docId__": 265,
+    "__docId__": 268,
     "kind": "function",
     "name": "sub_word",
     "memberof": "src/word.js",
@@ -5122,7 +5194,7 @@
     "ignore": true
   },
   {
-    "__docId__": 266,
+    "__docId__": 269,
     "kind": "function",
     "name": "js_word",
     "memberof": "src/word.js",
@@ -5159,7 +5231,7 @@
     "ignore": true
   },
   {
-    "__docId__": 267,
+    "__docId__": 270,
     "kind": "function",
     "name": "expand",
     "memberof": "src/word.js",
@@ -5196,7 +5268,7 @@
     "ignore": true
   },
   {
-    "__docId__": 268,
+    "__docId__": 271,
     "kind": "function",
     "name": "expand_env",
     "memberof": "src/word.js",
@@ -5233,7 +5305,7 @@
     "ignore": true
   },
   {
-    "__docId__": 269,
+    "__docId__": 272,
     "kind": "function",
     "name": "expand_tilde",
     "memberof": "src/word.js",
