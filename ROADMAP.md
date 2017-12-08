@@ -41,6 +41,15 @@
 
 ### Fixes
 
+- [ ] Reevaluate builtin approach to better take advantage of asynchronicity.
+- [ ] Come up with a way to prevent stdio streams from getting stuck to dead
+  processes (particularly JS subs and builtins). This is needed to prevent blush
+  from exiting abruptly.
+- [ ] Normalize all paths to POSIX style paths
+- [ ] On Windoze, env vars are case insensitive, but this is intended to provide
+  a POSIXish environment. Need to come up with some way to normalize env vars.
+  Perhaps well-known vars can be recased.
+- [ ] PATH env var should be updated to use POSIX delimiter on Windoze.
 - [ ] Pipe should still make it lo `less` in this example: `ls | {true && less;}`
 - [ ] ~~Fix word escaping (some sequences, like `\a` aren't handled)~~
 - [ ] Make escaping follow bash rules instead of zsh rules.
